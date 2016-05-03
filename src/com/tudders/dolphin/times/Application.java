@@ -14,7 +14,9 @@ import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -25,7 +27,6 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 	private ResultsWatcherThread resultsWatcherThread = null;
 	private Map<String, List<Race>> meetMap = null;
 	private Map<String, Date> meetDates = null;
-//	private String selectedMeet = null;
 	private MeetPanel meetPanel;
 	private RacePanel racePanel;
 	private ResultsPanel resultsPanel;
@@ -46,7 +47,6 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 		});
 		JPanel contentPanel = new JPanel();
 		contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
-//		contentPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 		resultsPanel = new ResultsPanel();
 		racePanel = new RacePanel();
 		racePanel.addRaceListener(this);
@@ -58,7 +58,10 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 		contentPanel.add(racePanel);
 		contentPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 		contentPanel.add(resultsPanel);
+		JLabel copyrightLabel = new JLabel("Release 0.1a - (C) Andy Tuddenham 2016");
+		copyrightLabel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
 		contentPanel.add(Box.createVerticalGlue());
+		contentPanel.add(copyrightLabel);
 		frame.getContentPane().add(contentPanel, BorderLayout.CENTER);
 		frame.pack();
 		frame.setLocationRelativeTo(null);
@@ -129,19 +132,30 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 				}
 			}
 		}
-		
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public void deleteFileEvent(Path filePath) {
-		System.out.println("Delete: "+filePath.toString()+", "+filePath.getFileName().toString());
 		String fileName = filePath.getFileName().toString();
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
-			System.out.println("fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
+			File file = filePath.toFile();
+			String meet = DolphinFile.getMeetFromFile(file);
+			if (meet != null) {
+				String raceNumber = DolphinFile.getRaceFromFile(file);
+				List<Race> raceList = meetMap.get(meet);
+				if (raceList != null) {
+					for (Race race : raceList) {
+						if (raceNumber.equals(race.getRaceNumber())) {
+							raceList.remove(race);
+							if (meet.equals(meetPanel.getSelectedMeet())) {
+								racePanel.removeRace(raceNumber);
+							}
+							break;
+						}
+					}
+				}
+			}
 		}
-		
-		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -173,6 +187,5 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 	@Override
 	public void selectRaceEvent(Race race) {
 		resultsPanel.setRace(race);
-		// TODO Auto-generated method stub
 	}
 }

@@ -1,17 +1,15 @@
 package com.tudders.dolphin.times;
 
-import java.awt.Color;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -28,48 +26,48 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	private Race race = null;
 	private JTable resultsTable;
 	private String[] columnNames = {"lane", "Time"};
-	private Object[][] tableData = new Object[10][2];
+	private Object[][] tableData = new Object[0][2];
 	private JTextArea textArea;
+	JScrollPane textScrollPane;
+	JCheckBox showRawTextCheckBox;
 
 	public ResultsPanel() {
-		setBorder(new CompoundBorder(new BevelBorder(BevelBorder.LOWERED), new EmptyBorder(2, 2, 2, 2)));
-//		setBackground(Color.YELLOW);
+		setBorder(new EmptyBorder(2, 2, 2, 2));
 		super.setLayout(new BorderLayout());
 
-		tableData[0][0] = new Integer(1);
-		tableData[1][0] = new Integer(2);
-		tableData[2][0] = new Integer(3);
-		tableData[3][0] = new Integer(4);
-		tableData[4][0] = new Integer(5);
-		tableData[5][0] = new Integer(6);
-		tableData[6][0] = new Integer(7);
-		tableData[7][0] = new Integer(8);
-		tableData[8][0] = new Integer(9);
-		tableData[9][0] = new Integer(10);
-		resultsTable = new JTable(10, 2);
-		resultsTable.setPreferredSize(new Dimension(240, 160));
-		resultsTable.setPreferredScrollableViewportSize(new Dimension(240, 160));
-//		resultsTable.setFillsViewportHeight(true);
-//		resultsTable.setBackground(Color.ORANGE);
+		showRawTextCheckBox = new JCheckBox("Show Raw text");
+		showRawTextCheckBox.addActionListener(this);
+		add(showRawTextCheckBox, BorderLayout.PAGE_START);
+
+		resultsTable = new JTable(0, 2);
+//		resultsTable.setPreferredSize(new Dimension(240, 160));
+		resultsTable.setPreferredScrollableViewportSize(new Dimension(240, 128));
+		resultsTable.setFillsViewportHeight(true);
 		resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		resultsTable.setModel(new ResultsTableModel(tableData, columnNames));
-		resultsTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-		resultsTable.getColumnModel().getColumn(0).setMinWidth(40);
+		resultsTable.getColumnModel().getColumn(0).setPreferredWidth(30);
+		resultsTable.getColumnModel().getColumn(0).setMinWidth(30);
 		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
 		rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
 		resultsTable.getColumnModel().getColumn(1).setCellRenderer(rightRenderer);
 		JScrollPane scrollPane = new JScrollPane(resultsTable);
 		add(scrollPane, BorderLayout.CENTER);
 		textArea = new JTextArea("");
-		JScrollPane textScrollPane = new JScrollPane(textArea);
-		add(textScrollPane, BorderLayout.LINE_END);
+		textScrollPane = new JScrollPane(textArea);
+		
 		
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		// TODO Auto-generated method stub
-
+	public void actionPerformed(ActionEvent event) {
+		if ("Show Raw text".equals(event.getActionCommand())) {
+			if (showRawTextCheckBox.isSelected()) {
+				add(textScrollPane, BorderLayout.LINE_END);
+			} else {
+				remove(textScrollPane);
+			}
+			validate();
+		}
 	}
 
 	@Override
@@ -78,20 +76,14 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	}
 
 	public void clearRace() {
-		// TODO clear the results table
+		textArea.setText("");;
+		ResultsTableModel resultsTableModel = (ResultsTableModel)resultsTable.getModel();
+		resultsTableModel.setRowCount(0);
 	}
 
 	public void setRace(Race race) {
-		this.race = race;
 		textArea.setText(race.getFileData());
 		List<Result> results = race.getRaceResults();
-//		tableData = new Object[results.size()][2];
-//		for (int index = 0; index < results.size(); index++) {
-//			Result result = results.get(index);
-//			tableData[index][0] = result.getLaneNumber();
-//			tableData[index][1] = result.getTime();
-//		}
-//		resultsTable.setModel(new ResultsTableModel(tableData, columnNames));
 		ResultsTableModel resultsTableModel = (ResultsTableModel)resultsTable.getModel();
 		resultsTableModel.setRowCount(results.size());
 		for (int index = 0; index < results.size(); index++) {
@@ -110,6 +102,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	}
 
 	private class ResultsTableModel extends DefaultTableModel {
+		private static final long serialVersionUID = 1L;
 		ResultsTableModel(Object[][] tableData, String[] columnNames) {
 			super(tableData, columnNames);
 		}

@@ -12,9 +12,6 @@ public class Main {
 	private static String propertiesFileName = null;
 	private static final String DEFAULT_WATCH_PATH = "C:\\CTSDolphin\\";
 
-	public Main() {
-	}
-
 	public static void main(String[] args) {
 		if (args.length > 0) {
 			propertiesFileName = args[0].endsWith(".properties") ? args[0] : args[0]+".properties";
@@ -49,7 +46,6 @@ public class Main {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				app.getFrame().setVisible(true);
-//				app.getTree().requestFocusInWindow();
 				app.start();
 			}
 		});

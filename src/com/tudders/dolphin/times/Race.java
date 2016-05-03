@@ -26,15 +26,16 @@ public class Race {
 		this.heat = DolphinFile.getHeatFromFile(file);
 		System.out.println("Race file="+file.getAbsolutePath());
 		results = new ArrayList<Result>();
+		BufferedReader br = null;
 		try {
-			BufferedReader br = new BufferedReader(new FileReader(file));
+			br = new BufferedReader(new FileReader(file));
 			String line;
 			while((line = br.readLine()) != null) {
 				fileData.append(line+"\n");
 				Matcher matcher = pattern.matcher(line);
-				boolean b = matcher.matches();
-				System.out.println("Race line: '"+line+"' matches="+b);
-				if (b) {
+				boolean matched = matcher.matches();
+				System.out.println("Race line: '"+line+"' matches="+matched);
+				if (matched) {
 					Integer lane = Integer.valueOf(matcher.group(1));
 					String time = matcher.group(2);
 					if (lane == 0 && "0".equals(time) && "1".equals(matcher.group(3)) && "A".equals(matcher.group(4))) {
@@ -46,17 +47,17 @@ public class Race {
 					}
 				}
 			}
-			// TODO sort entries by time
 			if (!results.isEmpty()) {
 				Collections.sort(results, new ResultComparator());
 			}
-			// TODO convert times to hh:mm:ss.ss
-		} catch (FileNotFoundException e) {
+		} catch (FileNotFoundException fnfe) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
+			fnfe.printStackTrace();
+		} catch (IOException ioe) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ioe.printStackTrace();
+		} finally {
+			if (br != null) try {br.close();} catch(IOException ioe) {}
 		}
 	}
 
@@ -98,7 +99,7 @@ public class Race {
 	private class ResultComparator implements Comparator<Result> {
 		@Override
 		public int compare(Result a, Result b) {
-			// sort in reverse order so that latest (higher race number) is at the top of the combo box
+			// sort in time increasing order
 			return Double.valueOf(a.getTime()).compareTo(Double.valueOf(b.getTime()));
 		}		
 	}

@@ -16,19 +16,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JComboBox;
 
-import java.awt.Color;
 import java.awt.Dimension;
 
 import javax.swing.Box;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 
 public class MeetPanel extends JPanel implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	private static final String MEET_SELECT_INDICATOR = "<select>";
 	private List<MeetListener> meetListeners = new ArrayList<MeetListener>();
-	private List<String> meetList;
 	private Map<String, Date> meetDates = null;
 	private JComboBox<String> meetComboBox;
 	JLabel dateLabel;
@@ -36,7 +32,6 @@ public class MeetPanel extends JPanel implements ActionListener {
 	public MeetPanel() {
 		super.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setBorder(new EmptyBorder(2, 2, 2, 2));
-//		setBackground(Color.CYAN);
 		JLabel meetLabel = new JLabel("Meet:");
 		meetLabel.setDisplayedMnemonic('M');
 		add(meetLabel);
@@ -81,7 +76,6 @@ public class MeetPanel extends JPanel implements ActionListener {
 	public void setMeetList(List<String> meetList, Map<String, Date> meetDates) {
 		this.meetDates = meetDates;
 		Collections.sort(meetList, new MeetComparator());
-		this.meetList = meetList;
 		meetComboBox.removeAllItems();
 		if (!meetList.isEmpty()) {
 			meetComboBox.addItem(MEET_SELECT_INDICATOR);

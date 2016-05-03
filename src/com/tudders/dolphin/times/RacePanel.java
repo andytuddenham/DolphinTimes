@@ -1,6 +1,5 @@
 package com.tudders.dolphin.times;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
@@ -15,8 +14,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 public class RacePanel extends JPanel implements ActionListener {
@@ -30,7 +27,6 @@ public class RacePanel extends JPanel implements ActionListener {
 	public RacePanel() {
 		super.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setBorder(new EmptyBorder(2, 2, 2, 2));
-//		setBackground(Color.MAGENTA);
 		JLabel raceLabel = new JLabel("Race:");
 		raceLabel.setDisplayedMnemonic('R');
 		add(raceLabel);
@@ -84,6 +80,10 @@ public class RacePanel extends JPanel implements ActionListener {
 
 	public void addRace(String race) {
 		raceComboBox.insertItemAt(race, 0);
+	}
+
+	public void removeRace(String race) {
+		raceComboBox.removeItem(race);
 	}
 
 	public void clearRaceList() {

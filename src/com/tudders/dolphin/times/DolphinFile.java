@@ -6,8 +6,10 @@ public class DolphinFile {
 	public static final String FILE_EXTENSION = "do3";
 	private static final String fileNamePattern = "\\d{3}-\\d{3}-\\d{2}[TPSF]\\d{4}";
 
-	public DolphinFile() {
-		// TODO Auto-generated constructor stub
+	// TODO look at converting this class to extend java.io.File
+
+	private DolphinFile() {
+		// prevent instantiation of this class
 	}
 
 	public static String getMeetFromFile(File file) {
