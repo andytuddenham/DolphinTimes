@@ -1,0 +1,88 @@
+package com.tudders.dolphin.times;
+
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ResultsWatcherThread extends Thread {
+	private String watchedDirectory;
+	private boolean run;
+	List<ResultsListener> resultsListeners = new ArrayList<ResultsListener>();
+
+	public ResultsWatcherThread(String watchedDirectory) {
+		run = true;
+		this.watchedDirectory = watchedDirectory;
+	}
+
+	@Override
+	public void run() {
+		try {
+			WatchService watcher = FileSystems.getDefault().newWatchService();
+			Path watchPath = FileSystems.getDefault().getPath(watchedDirectory);
+			watchPath.register(watcher, java.nio.file.StandardWatchEventKinds.ENTRY_CREATE, java.nio.file.StandardWatchEventKinds.ENTRY_DELETE, java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY);
+			while (run) {
+				WatchKey key;
+				try {
+					key = watcher.take();
+				} catch (InterruptedException e) {
+					continue;
+				}
+				for (WatchEvent<?> event : key.pollEvents()) {
+					WatchEvent.Kind<?> kind = event.kind();
+					WatchEvent<Path> watchEvent = (WatchEvent<Path>)event;
+					Path filePath = watchEvent.context();
+					System.out.println(kind.name()+": "+filePath);
+					switch (kind.name()) {
+					case "OVERFLOW":
+						break;
+					case "ENTRY_CREATE":
+						for(ResultsListener resultsListener: resultsListeners){
+							resultsListener.createFileEvent(filePath.toAbsolutePath());
+						}
+						break;
+					case "ENTRY_DELETE":
+						for(ResultsListener resultsListener: resultsListeners){
+							resultsListener.deleteFileEvent(filePath.toAbsolutePath());
+						}
+						break;
+					case "ENTRY_MODIFY":
+						for(ResultsListener resultsListener: resultsListeners){
+							resultsListener.modifyFileEvent(filePath.toAbsolutePath());
+						}
+						break;
+					}
+					
+				}
+				boolean hasReset = key.reset();
+				if (!hasReset) {
+					// TODO notify the Application object of this failure
+					System.out.println("Failed to reset the key!");
+					break;
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void addResultsListener(ResultsListener resultsListener){
+		resultsListeners.add(resultsListener);
+	}
+	
+	public void removeResultsListener(ResultsListener resultsListener){
+		if(resultsListeners.contains(resultsListener)){
+			resultsListeners.remove(resultsListener);
+		}
+	}
+
+	public void shutdown() {
+		run = false;
+		interrupt();
+	}
+}
