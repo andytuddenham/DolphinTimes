@@ -23,7 +23,6 @@ import javax.swing.border.EmptyBorder;
 
 public class MeetPanel extends JPanel implements ActionListener {
 	private static final long serialVersionUID = 1L;
-	private static final String MEET_SELECT_INDICATOR = "<select>";
 	private List<MeetListener> meetListeners = new ArrayList<MeetListener>();
 	private Map<String, Date> meetDates = null;
 	private JComboBox<String> meetComboBox;
@@ -31,7 +30,7 @@ public class MeetPanel extends JPanel implements ActionListener {
 
 	public MeetPanel() {
 		super.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-		setBorder(new EmptyBorder(2, 2, 2, 2));
+		setBorder(new EmptyBorder(2, 8, 2, 2));
 		JLabel meetLabel = new JLabel("Meet:");
 		meetLabel.setDisplayedMnemonic('M');
 		add(meetLabel);
@@ -56,7 +55,8 @@ public class MeetPanel extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent event) {
 		if ("comboBoxChanged".equals(event.getActionCommand())) {
 			for(MeetListener meetListener: meetListeners){
-				if (MEET_SELECT_INDICATOR.equals((String)((JComboBox)event.getSource()).getSelectedItem())) {
+				String meet = (String)((JComboBox)event.getSource()).getSelectedItem();
+				if (meet == null) {
 					meetListener.clearMeetEvent();
 					dateLabel.setText("");
 				} else {
@@ -68,9 +68,7 @@ public class MeetPanel extends JPanel implements ActionListener {
 	}
 
 	public String getSelectedMeet() {
-		String meet = (String)meetComboBox.getSelectedItem();
-		if (MEET_SELECT_INDICATOR.equals(meet)) meet = null;
-		return meet;
+		return (String)meetComboBox.getSelectedItem();
 	}
 
 	public void setMeetList(List<String> meetList, Map<String, Date> meetDates) {
@@ -78,7 +76,6 @@ public class MeetPanel extends JPanel implements ActionListener {
 		Collections.sort(meetList, new MeetComparator());
 		meetComboBox.removeAllItems();
 		if (!meetList.isEmpty()) {
-			meetComboBox.addItem(MEET_SELECT_INDICATOR);
 			for (String meet : meetList) {
 				meetComboBox.addItem(meet);
 			}

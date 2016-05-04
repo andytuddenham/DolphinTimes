@@ -5,11 +5,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -17,30 +21,47 @@ import javax.swing.table.DefaultTableModel;
 import com.tudders.dolphin.times.Race.Result;
 
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.JScrollPane;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 
 public class ResultsPanel extends JPanel implements ActionListener {
 	private static final long serialVersionUID = 1L;
-	private Race race = null;
+	private JLabel headerLabelLeft;
+	private JLabel headerLabelRight;
+	private JCheckBox showRawTextCheckBox;
 	private JTable resultsTable;
-	private String[] columnNames = {"lane", "Time"};
+	private String[] columnNames = {"Lane", "Time"};
 	private Object[][] tableData = new Object[0][2];
 	private JTextArea textArea;
-	JScrollPane textScrollPane;
-	JCheckBox showRawTextCheckBox;
+	private JScrollPane textScrollPane;
 
 	public ResultsPanel() {
-		setBorder(new EmptyBorder(2, 2, 2, 2));
+		setBorder(new CompoundBorder(new BevelBorder(BevelBorder.RAISED), new EmptyBorder(2, 2, 2, 2)));
 		super.setLayout(new BorderLayout());
+
+		JPanel header = new JPanel();
+		header.setLayout(new BoxLayout(header, BoxLayout.PAGE_AXIS));
+		headerLabelLeft = new JLabel("");
+		headerLabelRight = new JLabel("");
+		headerLabelRight.setHorizontalAlignment(SwingConstants.RIGHT);
+		headerLabelLeft.setBorder(new EmptyBorder(0, 5, 0, 0)); /* aligns text with checkbox */
+		headerLabelRight.setBorder(new EmptyBorder(0, 0, 0, 2));
+		JPanel headerPanel = new JPanel();
+		headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.LINE_AXIS));
+		headerPanel.add(headerLabelLeft);
+		headerPanel.add(Box.createGlue());
+		headerPanel.add(headerLabelRight);
+		headerPanel.setAlignmentX(LEFT_ALIGNMENT);
+		header.add(headerPanel);
 
 		showRawTextCheckBox = new JCheckBox("Show Raw text");
 		showRawTextCheckBox.addActionListener(this);
-		add(showRawTextCheckBox, BorderLayout.PAGE_START);
+		header.add(showRawTextCheckBox);
+		add(header, BorderLayout.PAGE_START);
 
 		resultsTable = new JTable(0, 2);
-//		resultsTable.setPreferredSize(new Dimension(240, 160));
 		resultsTable.setPreferredScrollableViewportSize(new Dimension(240, 128));
 		resultsTable.setFillsViewportHeight(true);
 		resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -54,8 +75,6 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		add(scrollPane, BorderLayout.CENTER);
 		textArea = new JTextArea("");
 		textScrollPane = new JScrollPane(textArea);
-		
-		
 	}
 
 	@Override
@@ -82,6 +101,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	}
 
 	public void setRace(Race race) {
+		headerLabelLeft.setText("Event: "+race.getEventNumber()+" Heat: "+race.getHeatNumber());
+		headerLabelRight.setText("Race: "+race.getRaceNumber());
 		textArea.setText(race.getFileData());
 		List<Result> results = race.getRaceResults();
 		ResultsTableModel resultsTableModel = (ResultsTableModel)resultsTable.getModel();

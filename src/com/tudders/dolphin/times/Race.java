@@ -43,7 +43,7 @@ public class Race {
 					} else {
 						Result result = new Result(lane, time);
 						results.add(result);
-						System.out.println("Added result: "+result);
+						System.out.println("Added result [lane "+result.getLaneNumber()+" : "+result.getTime()+"]");
 					}
 				}
 			}
@@ -79,6 +79,10 @@ public class Race {
 
 	public List<Result> getRaceResults() {
 		return results;
+	}
+
+	public boolean isValid() {
+		return fileData.length() > 0 && !results.isEmpty();
 	}
 
 	public class Result {

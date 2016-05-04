@@ -1,8 +1,10 @@
 package com.tudders.dolphin.times;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -24,7 +26,7 @@ public class ResultsWatcherThread extends Thread {
 		try {
 			WatchService watcher = FileSystems.getDefault().newWatchService();
 			Path watchPath = FileSystems.getDefault().getPath(watchedDirectory);
-			watchPath.register(watcher, java.nio.file.StandardWatchEventKinds.ENTRY_CREATE, java.nio.file.StandardWatchEventKinds.ENTRY_DELETE, java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY);
+			watchPath.register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
 			while (run) {
 				WatchKey key;
 				try {
@@ -36,23 +38,24 @@ public class ResultsWatcherThread extends Thread {
 					WatchEvent.Kind<?> kind = event.kind();
 					WatchEvent<Path> watchEvent = (WatchEvent<Path>)event;
 					Path filePath = watchEvent.context();
-					System.out.println(kind.name()+": "+filePath);
+					String fileName = watchedDirectory+(watchedDirectory.endsWith(File.separator) ? "" : File.separator+filePath);
+					System.out.println(kind.name()+": "+fileName);
 					switch (kind.name()) {
 					case "OVERFLOW":
 						break;
 					case "ENTRY_CREATE":
 						for(ResultsListener resultsListener: resultsListeners){
-							resultsListener.createFileEvent(filePath.toAbsolutePath());
+							resultsListener.createFileEvent(fileName);
 						}
 						break;
 					case "ENTRY_DELETE":
 						for(ResultsListener resultsListener: resultsListeners){
-							resultsListener.deleteFileEvent(filePath.toAbsolutePath());
+							resultsListener.deleteFileEvent(fileName);
 						}
 						break;
 					case "ENTRY_MODIFY":
 						for(ResultsListener resultsListener: resultsListeners){
-							resultsListener.modifyFileEvent(filePath.toAbsolutePath());
+							resultsListener.modifyFileEvent(fileName);
 						}
 						break;
 					}

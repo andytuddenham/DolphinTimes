@@ -5,23 +5,22 @@ import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.EmptyBorder;
 
-public class Application implements ResultsListener, MeetListener, RaceListener {
+public class Application implements ResultsListener, MeetListener {
+	private static final String COPYRIGHT_TEXT = "Release 0.2 - \u00a9 Andy Tuddenham 2016";
 	private JFrame frame = new JFrame();
 	private String watchDir;
 	private ResultsWatcherThread resultsWatcherThread = null;
@@ -29,7 +28,6 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 	private Map<String, Date> meetDates = null;
 	private MeetPanel meetPanel;
 	private RacePanel racePanel;
-	private ResultsPanel resultsPanel;
 
 	public Application(String watchDir) {
 		this.watchDir = watchDir;
@@ -46,23 +44,19 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 			}
 		});
 		JPanel contentPanel = new JPanel();
-		contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
-		resultsPanel = new ResultsPanel();
+		contentPanel.setLayout(new BorderLayout());
 		racePanel = new RacePanel();
-		racePanel.addRaceListener(this);
 		meetPanel = new MeetPanel();
 		meetPanel.addMeetListener(this);
 		meetPanel.setMeetList(getMeetList(watchDir), meetDates);
-		contentPanel.add(meetPanel);
-		contentPanel.add(Box.createRigidArea(new Dimension(0, 2)));
-		contentPanel.add(racePanel);
-		contentPanel.add(Box.createRigidArea(new Dimension(0, 2)));
-		contentPanel.add(resultsPanel);
-		JLabel copyrightLabel = new JLabel("Release 0.1a - (C) Andy Tuddenham 2016");
-		copyrightLabel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
-		contentPanel.add(Box.createVerticalGlue());
-		contentPanel.add(copyrightLabel);
+		contentPanel.add(meetPanel, BorderLayout.PAGE_START);
+		contentPanel.add(racePanel, BorderLayout.CENTER);
+		JLabel copyrightLabel = new JLabel(COPYRIGHT_TEXT);
+		copyrightLabel.setBorder(new EmptyBorder(2, 5, 2, 5));
+		copyrightLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		contentPanel.add(copyrightLabel, BorderLayout.PAGE_END);
 		frame.getContentPane().add(contentPanel, BorderLayout.CENTER);
+		frame.getContentPane().setPreferredSize(new Dimension(773, 460));
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 	}
@@ -85,7 +79,10 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 			if (!meetDates.containsKey(meet) || modifiedDate.getTime() < meetDates.get(meet).getTime()) {
 				meetDates.put(meet, modifiedDate);
 			}
-			raceList.add(new Race(file));
+			Race race = new Race(file);
+			if (race.isValid()) {
+				raceList.add(race);
+			}
 		}
 		return meet;
 	}
@@ -106,6 +103,7 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 
 	public void start() {
 		resultsWatcherThread = new ResultsWatcherThread(watchDir);
+		resultsWatcherThread.setName("Results Watcher");
 		resultsWatcherThread.addResultsListener(this);
 		resultsWatcherThread.start();
 	}
@@ -122,23 +120,26 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 	}
 
 	@Override
-	public void createFileEvent(Path filePath) {
-		String fileName = filePath.getFileName().toString();
+	public void createFileEvent(String fileName) {
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
-			String meet = addResultsFile(filePath.toFile());
+			File file = new File(fileName);
+			String meet = addResultsFile(file);
 			if (meet != null) {
-				if (meet.equals(meetPanel.getSelectedMeet())) {
-					racePanel.addRace(DolphinFile.getRaceFromFile(new File(fileName)));
+				Integer newMeet = Integer.valueOf(meet);
+				Integer selectedMeet = Integer.valueOf(meetPanel.getSelectedMeet());
+				if (newMeet == selectedMeet) {
+					racePanel.setRaceList(meetMap.get(meet));
+				} else if (newMeet > selectedMeet) {
+					meetPanel.setMeetList(new ArrayList<String>(meetMap.keySet()), meetDates);
 				}
 			}
 		}
 	}
 
 	@Override
-	public void deleteFileEvent(Path filePath) {
-		String fileName = filePath.getFileName().toString();
+	public void deleteFileEvent(String fileName) {
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
-			File file = filePath.toFile();
+			File file = new File(fileName);
 			String meet = DolphinFile.getMeetFromFile(file);
 			if (meet != null) {
 				String raceNumber = DolphinFile.getRaceFromFile(file);
@@ -148,7 +149,7 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 						if (raceNumber.equals(race.getRaceNumber())) {
 							raceList.remove(race);
 							if (meet.equals(meetPanel.getSelectedMeet())) {
-								racePanel.removeRace(raceNumber);
+								racePanel.setRaceList(raceList);
 							}
 							break;
 						}
@@ -159,9 +160,8 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 	}
 
 	@Override
-	public void modifyFileEvent(Path filePath) {
-		System.out.println("Modify: "+filePath.toString());
-		String fileName = filePath.getFileName().toString();
+	public void modifyFileEvent(String fileName) {
+		System.out.println("Modify: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			System.out.println("fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
 		}
@@ -177,15 +177,5 @@ public class Application implements ResultsListener, MeetListener, RaceListener 
 	@Override
 	public void selectMeetEvent(String meet) {
 		racePanel.setRaceList(meetMap.get(meet));
-	}
-
-	@Override
-	public void clearRaceEvent() {
-		resultsPanel.clearRace();
-	}
-
-	@Override
-	public void selectRaceEvent(Race race) {
-		resultsPanel.setRace(race);
 	}
 }
