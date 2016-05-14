@@ -38,7 +38,7 @@ public class ResultsWatcherThread extends Thread {
 					WatchEvent.Kind<?> kind = event.kind();
 					WatchEvent<Path> watchEvent = (WatchEvent<Path>)event;
 					Path filePath = watchEvent.context();
-					String fileName = watchedDirectory+(watchedDirectory.endsWith(File.separator) ? "" : File.separator+filePath);
+					String fileName = watchedDirectory+(watchedDirectory.endsWith(File.separator) ? "" : File.separator)+filePath;
 					System.out.println(kind.name()+": "+fileName);
 					switch (kind.name()) {
 					case "OVERFLOW":
