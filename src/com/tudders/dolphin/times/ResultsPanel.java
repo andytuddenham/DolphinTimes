@@ -125,7 +125,6 @@ public class ResultsPanel extends JPanel implements ActionListener, MouseListene
 		int normalTableRowHeight = resultsTable.getRowHeight();
 		int normalTableFontSize = resultsTable.getFont().getSize();
 		if (tableFontSize != 0) {
-			System.out.println("normal font size = "+normalTableFontSize);
 			resultsTable.setFont(new Font("Tahoma", Font.PLAIN, tableFontSize));
 			resultsTable.setRowHeight(normalTableRowHeight-normalTableFontSize+tableFontSize);
 		}

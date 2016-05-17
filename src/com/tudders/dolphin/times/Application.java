@@ -36,6 +36,7 @@ public class Application implements ResultsListener {
 	private Map<String, List<Race>> meetMap = null;
 	private Map<String, Date> meetDates = null;
 	private List<RaceFrame> raceFrameList = new ArrayList<RaceFrame>();
+	private static boolean debug = "true".equals(Application.getProperty("application.debug", Application.getProperty("debug", "false")));
 
 	public Application(String watchDir) {
 		this.watchDir = watchDir;
@@ -141,7 +142,7 @@ public class Application implements ResultsListener {
 	public void modifyFileEvent(String fileName) {
 		System.out.println("Modify: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
-			System.out.println("fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
+			if (debug) System.out.println("fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
 		}
 		
 		// TODO Auto-generated method stub

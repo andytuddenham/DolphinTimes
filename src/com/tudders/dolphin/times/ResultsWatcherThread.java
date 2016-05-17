@@ -15,6 +15,7 @@ public class ResultsWatcherThread extends Thread {
 	private String watchedDirectory;
 	private boolean run;
 	private List<ResultsListener> resultsListeners = new ArrayList<ResultsListener>();
+	private static boolean debug = "true".equals(Application.getProperty("resultswatcher.debug", Application.getProperty("debug", "false")));
 
 	public ResultsWatcherThread(String watchedDirectory) {
 		run = true;
@@ -39,7 +40,7 @@ public class ResultsWatcherThread extends Thread {
 					WatchEvent<Path> watchEvent = (WatchEvent<Path>)event;
 					Path filePath = watchEvent.context();
 					String fileName = watchedDirectory+(watchedDirectory.endsWith(File.separator) ? "" : File.separator)+filePath;
-					System.out.println(kind.name()+": "+fileName);
+					if (debug) System.out.println(kind.name()+": "+fileName);
 					switch (kind.name()) {
 					case "OVERFLOW":
 						break;
@@ -64,7 +65,7 @@ public class ResultsWatcherThread extends Thread {
 				boolean hasReset = key.reset();
 				if (!hasReset) {
 					// TODO notify the Application object of this failure
-					System.out.println("Failed to reset the key!");
+					System.err.println("Failed to reset the key!");
 					break;
 				}
 			}

@@ -169,7 +169,6 @@ public class RaceListPanel extends JPanel {
 	}
 
 	public void setRaceList(List<Race> raceList) {
-		System.out.println("RaceListPanel.setRaceList size="+raceList.size());
 		clearRaceList();
 		Collections.sort(raceList, new RaceComparator());
 		for (Race race : raceList) {
