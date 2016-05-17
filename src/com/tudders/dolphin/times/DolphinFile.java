@@ -5,6 +5,7 @@ import java.io.File;
 public class DolphinFile {
 	public static final String FILE_EXTENSION = "do3";
 	private static final String fileNamePattern = "\\d{3}-\\d{3}-\\d{2}[TPSF]\\d{4}";
+	private static final String DEFAULT_RESULTS_PATH = "C:\\CTSDolphin\\";
 
 	// TODO look at converting this class to extend java.io.File
 
@@ -53,5 +54,9 @@ public class DolphinFile {
 			}
 		}
 		return null;
+	}
+
+	public static String GetResultsPath() {
+		return Application.getProperty("dolphin.results.path", DEFAULT_RESULTS_PATH);
 	}
 }

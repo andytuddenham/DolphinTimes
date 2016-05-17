@@ -3,20 +3,21 @@ package com.tudders.dolphin.times;
 import javax.swing.SwingUtilities;
 
 public class Main {
-	private static final String DEFAULT_WATCH_PATH = "C:\\CTSDolphin\\";
 
 	public static void main(String[] args) {
-		if (args.length > 0) {
-			Application.loadProperties(args[0].endsWith(".properties") ? args[0] : args[0]+".properties");
+		switch (args.length) {
+		case 1: Application.loadProperties(args[0].endsWith(".properties") ? args[0] : args[0]+".properties");
+		case 0: /* intentional fall through from above */
+			Application app = new Application(DolphinFile.GetResultsPath());
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					app.getFrame().setVisible(true);
+					app.start();
+				}
+			});
+			break;
+		default:
+			System.out.println("Invalid arguments");
 		}
-		String watchDir = Application.getProperty("dolphin.times.path", DEFAULT_WATCH_PATH);
-		Application app = new Application(watchDir);
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				app.getFrame().setVisible(true);
-				app.start();
-			}
-		});
 	}
-
 }
