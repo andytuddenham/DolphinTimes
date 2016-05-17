@@ -14,7 +14,7 @@ import java.util.List;
 public class ResultsWatcherThread extends Thread {
 	private String watchedDirectory;
 	private boolean run;
-	List<ResultsListener> resultsListeners = new ArrayList<ResultsListener>();
+	private List<ResultsListener> resultsListeners = new ArrayList<ResultsListener>();
 
 	public ResultsWatcherThread(String watchedDirectory) {
 		run = true;

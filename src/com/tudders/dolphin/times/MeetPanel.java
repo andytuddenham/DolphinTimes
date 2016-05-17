@@ -82,6 +82,17 @@ public class MeetPanel extends JPanel implements ActionListener {
 		}
 	}
 
+	public void setMeet(String meetNumber) {
+		int items = meetComboBox.getItemCount();
+		for (int index = 0; index < items; index++) {
+			String meet = meetComboBox.getItemAt(index);
+			if (meetNumber.equals(meet)) {
+				meetComboBox.setSelectedIndex(index);
+				break;
+			}
+		}
+	}
+
 	public void addMeetListener(MeetListener meetListener){
 		meetListeners.add(meetListener);
 	}
