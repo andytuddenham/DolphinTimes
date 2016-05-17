@@ -11,13 +11,12 @@ public class Main {
 			Application app = new Application(DolphinFile.GetResultsPath());
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					app.getFrame().setVisible(true);
 					app.start();
 				}
 			});
 			break;
 		default:
-			System.out.println("Invalid arguments");
+			System.err.println("Invalid arguments");
 		}
 	}
 }

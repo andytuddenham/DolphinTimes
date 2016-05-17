@@ -26,17 +26,15 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 
-public class Application implements ResultsListener, MeetListener, ResultsPanelListener {
+public class Application implements ResultsListener {
 	private static final String COPYRIGHT_TEXT = "Release 0.3 - \u00a9 Andy Tuddenham 2016";
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
 	private static Properties properties = null;
-	private JFrame frame = new JFrame();
+	private ListFrame listFrame;
 	private String watchDir;
 	private ResultsWatcherThread resultsWatcherThread = null;
 	private Map<String, List<Race>> meetMap = null;
 	private Map<String, Date> meetDates = null;
-	private MeetPanel meetPanel;
-	private RaceListPanel raceListPanel;
 	private List<RaceFrame> raceFrameList = new ArrayList<RaceFrame>();
 
 	public Application(String watchDir) {
@@ -44,35 +42,7 @@ public class Application implements ResultsListener, MeetListener, ResultsPanelL
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e1) {}
-		frame.setTitle("Dolphin Times");
-		frame.setSize(450,  300);
-		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent we) {
-				appExit();
-			}
-		});
-		JPanel contentPanel = new JPanel();
-		contentPanel.setLayout(new BorderLayout());
-		raceListPanel = new RaceListPanel(this);
-		meetPanel = new MeetPanel();
-		meetPanel.addMeetListener(this);
-		meetPanel.setMeetList(getMeetList(watchDir), meetDates);
-		contentPanel.add(meetPanel, BorderLayout.PAGE_START);
-		contentPanel.add(raceListPanel, BorderLayout.CENTER);
-		JLabel copyrightLabel = new JLabel(COPYRIGHT_TEXT);
-		copyrightLabel.setBorder(new EmptyBorder(2, 5, 2, 5));
-		copyrightLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		contentPanel.add(copyrightLabel, BorderLayout.PAGE_END);
-		frame.getContentPane().add(contentPanel, BorderLayout.CENTER);
-		frame.getContentPane().setPreferredSize(new Dimension(773, 460));
-		frame.pack();
-		frame.setLocationRelativeTo(null);
-	}
-
-	public JFrame getFrame() {
-		return frame;
+		listFrame = new ListFrame();
 	}
 
 	private String addResultsFile(File file) {
@@ -112,6 +82,7 @@ public class Application implements ResultsListener, MeetListener, ResultsPanelL
 	}
 
 	public void start() {
+		listFrame.setVisible(true);
 		resultsWatcherThread = new ResultsWatcherThread(watchDir);
 		resultsWatcherThread.setName("Results Watcher");
 		resultsWatcherThread.addResultsListener(this);
@@ -129,7 +100,7 @@ public class Application implements ResultsListener, MeetListener, ResultsPanelL
 		for (RaceFrame raceFrame: raceFrameList) {
 			raceFrame.dispose();
 		}
-		frame.dispose();
+		listFrame.dispose();
 	}
 
 	@Override
@@ -138,13 +109,8 @@ public class Application implements ResultsListener, MeetListener, ResultsPanelL
 			File file = new File(fileName);
 			String meet = addResultsFile(file);
 			if (meet != null) {
-				Integer newMeet = Integer.valueOf(meet);
-				Integer selectedMeet = Integer.valueOf(meetPanel.getSelectedMeet());
-				if (newMeet == selectedMeet) {
-					raceListPanel.setRaceList(meetMap.get(meet));
-				} else if (newMeet > selectedMeet) {
-					meetPanel.setMeetList(new ArrayList<String>(meetMap.keySet()), meetDates);
-				}
+				listFrame.newRaceInMeet(meet);
+				// TODO notify each member of raceFrameList
 			}
 		}
 	}
@@ -161,9 +127,8 @@ public class Application implements ResultsListener, MeetListener, ResultsPanelL
 					for (Race race : raceList) {
 						if (raceNumber.equals(race.getRaceNumber())) {
 							raceList.remove(race);
-							if (meet.equals(meetPanel.getSelectedMeet())) {
-								raceListPanel.setRaceList(raceList);
-							}
+							listFrame.removedRaceFromMeet(meet);
+							// TODO notify each member of raceFrameList
 							break;
 						}
 					}
@@ -182,14 +147,75 @@ public class Application implements ResultsListener, MeetListener, ResultsPanelL
 		// TODO Auto-generated method stub
 	}
 
-	@Override
-	public void clearMeetEvent() {
-		raceListPanel.clearRaceList();
-	}
 
-	@Override
-	public void selectMeetEvent(String meet) {
-		raceListPanel.setRaceList(meetMap.get(meet));
+
+	private class ListFrame extends JFrame implements MeetListener, ResultsPanelListener {
+		private static final long serialVersionUID = 1L;
+		private MeetPanel meetPanel;
+		private RaceListPanel raceListPanel;
+
+		ListFrame() {
+			setTitle("Dolphin Times");
+//			setSize(450,  300);
+			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent we) {
+					appExit();
+				}
+			});
+			JPanel contentPanel = new JPanel();
+			contentPanel.setLayout(new BorderLayout());
+			raceListPanel = new RaceListPanel(this);
+			meetPanel = new MeetPanel();
+			meetPanel.addMeetListener(this);
+			meetPanel.setMeetList(getMeetList(watchDir), meetDates);
+			contentPanel.add(meetPanel, BorderLayout.PAGE_START);
+			contentPanel.add(raceListPanel, BorderLayout.CENTER);
+			JLabel copyrightLabel = new JLabel(COPYRIGHT_TEXT);
+			copyrightLabel.setBorder(new EmptyBorder(2, 5, 2, 5));
+			copyrightLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			contentPanel.add(copyrightLabel, BorderLayout.PAGE_END);
+			getContentPane().add(contentPanel, BorderLayout.CENTER);
+			getContentPane().setPreferredSize(new Dimension(773, 460));
+			pack();
+			setLocationRelativeTo(null);
+		}
+
+		@Override
+		public void detailRequest(String raceNumber) {
+			RaceFrame raceFrame = new RaceFrame();
+			raceFrame.setMeet(meetPanel.getSelectedMeet());
+			raceFrame.setRace(raceNumber);
+			raceFrame.setVisible(true);
+			raceFrameList.add(raceFrame);
+		}
+
+		@Override
+		public void selectMeetEvent(String meet) {
+			raceListPanel.setRaceList(meetMap.get(meet));
+		}
+
+		@Override
+		public void clearMeetEvent() {
+			raceListPanel.clearRaceList();
+		}
+
+		public void newRaceInMeet(String meet) {
+			Integer newMeet = Integer.valueOf(meet);
+			Integer selectedMeet = Integer.valueOf(meetPanel.getSelectedMeet());
+			if (newMeet == selectedMeet) {
+				raceListPanel.setRaceList(meetMap.get(meet));
+			} else if (newMeet > selectedMeet) {
+				meetPanel.setMeetList(new ArrayList<String>(meetMap.keySet()), meetDates);
+			}
+		}
+
+		public void removedRaceFromMeet(String meet) {
+			if (meet.equals(meetPanel.getSelectedMeet())) {
+				raceListPanel.setRaceList(meetMap.get(meet));
+			}
+		}
 	}
 
 	private class RaceFrame extends JFrame implements MeetListener, RaceListener {
@@ -240,20 +266,11 @@ public class Application implements ResultsListener, MeetListener, ResultsPanelL
 		public void setRace(String raceNumber) { racePanel.setRace(raceNumber); }
 	}
 
-	public void removeRaceFrame(RaceFrame raceFrame) {
+	private void removeRaceFrame(RaceFrame raceFrame) {
 		if (raceFrameList.contains(raceFrame)) {
 			raceFrameList.remove(raceFrame);
 			raceFrame.dispose();
 		}
-	}
-
-	@Override
-	public void detailRequest(String raceNumber) {
-		RaceFrame raceFrame = new RaceFrame();
-		raceFrame.setMeet(meetPanel.getSelectedMeet());
-		raceFrame.setRace(raceNumber);
-		raceFrame.setVisible(true);
-		raceFrameList.add(raceFrame);
 	}
 
 	public static void loadProperties(String propertiesFileName) {
