@@ -19,13 +19,12 @@ public class Race {
 	private StringBuilder fileData = new StringBuilder();
 	private List<Result> results;
 	private Pattern pattern = Pattern.compile("^(\\d{1,2});([0-9.]+);([^;]*);([^;]*)$");
-	private static boolean debug = "true".equals(Application.getProperty("race.debug", Application.getProperty("debug", "false")));
 
 	public Race(File file) {
 		this.race = DolphinFile.getRaceFromFile(file);
 		this.event = DolphinFile.getEventFromFile(file);
 		this.heat = DolphinFile.getHeatFromFile(file);
-		if (debug) System.out.println("Race file="+file.getAbsolutePath());
+		Debug.print(this, "file="+file.getAbsolutePath());
 		results = new ArrayList<Result>();
 		BufferedReader br = null;
 		try {
@@ -35,16 +34,16 @@ public class Race {
 				fileData.append(line+"\n");
 				Matcher matcher = pattern.matcher(line);
 				boolean matched = matcher.matches();
-				if (debug) System.out.println("Race line: '"+line+"' matches="+matched);
+				Debug.print(this, "line: '"+line+"' matches="+matched);
 				if (matched) {
 					Integer lane = Integer.valueOf(matcher.group(1));
 					String time = matcher.group(2);
 					if (lane == 0 && "0".equals(time) && "1".equals(matcher.group(3)) && "A".equals(matcher.group(4))) {
-						if (debug) System.out.println("eliminating '0;0;1;A'");
+						Debug.print(this, "eliminating '0;0;1;A'");
 					} else {
 						Result result = new Result(lane, time);
 						results.add(result);
-						if (debug) System.out.println("Added result [lane "+result.getLaneNumber()+" : "+result.getTime()+"]");
+						Debug.print(this, "Added result [lane "+result.getLaneNumber()+" : "+result.getTime()+"]");
 					}
 				}
 			}

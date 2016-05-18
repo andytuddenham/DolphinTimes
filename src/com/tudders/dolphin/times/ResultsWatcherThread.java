@@ -15,7 +15,6 @@ public class ResultsWatcherThread extends Thread {
 	private String watchedDirectory;
 	private boolean run;
 	private List<ResultsListener> resultsListeners = new ArrayList<ResultsListener>();
-	private static boolean debug = "true".equals(Application.getProperty("resultswatcher.debug", Application.getProperty("debug", "false")));
 
 	public ResultsWatcherThread(String watchedDirectory) {
 		run = true;
@@ -24,6 +23,7 @@ public class ResultsWatcherThread extends Thread {
 
 	@Override
 	public void run() {
+		Debug.print(this, "started");
 		try {
 			WatchService watcher = FileSystems.getDefault().newWatchService();
 			Path watchPath = FileSystems.getDefault().getPath(watchedDirectory);
@@ -40,7 +40,7 @@ public class ResultsWatcherThread extends Thread {
 					WatchEvent<Path> watchEvent = (WatchEvent<Path>)event;
 					Path filePath = watchEvent.context();
 					String fileName = watchedDirectory+(watchedDirectory.endsWith(File.separator) ? "" : File.separator)+filePath;
-					if (debug) System.out.println(kind.name()+": "+fileName);
+					Debug.print(this, kind.name()+": "+fileName);
 					switch (kind.name()) {
 					case "OVERFLOW":
 						break;
@@ -64,15 +64,16 @@ public class ResultsWatcherThread extends Thread {
 				}
 				boolean hasReset = key.reset();
 				if (!hasReset) {
-					// TODO notify the Application object of this failure
+					Debug.print(this, "Failed to reset the key!");
 					System.err.println("Failed to reset the key!");
 					break;
 				}
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			Debug.print(this, "caught "+e.getLocalizedMessage());
 			e.printStackTrace();
 		}
+		Debug.print(this, "ended");
 	}
 
 	public void addResultsListener(ResultsListener resultsListener){
@@ -86,6 +87,7 @@ public class ResultsWatcherThread extends Thread {
 	}
 
 	public void shutdown() {
+		Debug.print(this, "shutting down");
 		run = false;
 		interrupt();
 	}

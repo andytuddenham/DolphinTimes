@@ -67,6 +67,10 @@ public class MeetPanel extends JPanel implements ActionListener {
 		}
 	}
 
+	public void addMeet(String meet) {
+		meetComboBox.insertItemAt(meet, 0);
+	}
+
 	public String getSelectedMeet() {
 		return (String)meetComboBox.getSelectedItem();
 	}

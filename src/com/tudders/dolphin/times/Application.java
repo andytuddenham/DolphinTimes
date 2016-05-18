@@ -36,7 +36,6 @@ public class Application implements ResultsListener {
 	private Map<String, List<Race>> meetMap = null;
 	private Map<String, Date> meetDates = null;
 	private List<RaceFrame> raceFrameList = new ArrayList<RaceFrame>();
-	private static boolean debug = "true".equals(Application.getProperty("application.debug", Application.getProperty("debug", "false")));
 
 	public Application(String watchDir) {
 		this.watchDir = watchDir;
@@ -91,6 +90,7 @@ public class Application implements ResultsListener {
 	}
 
 	private void appExit() {
+		Debug.print(this, "appExit start");
 		if (resultsWatcherThread != null) {
 			resultsWatcherThread.removeResultsListener(this);
 			resultsWatcherThread.shutdown();
@@ -102,22 +102,27 @@ public class Application implements ResultsListener {
 			raceFrame.dispose();
 		}
 		listFrame.dispose();
+		Debug.print(this, "appExit end");
 	}
 
 	@Override
 	public void createFileEvent(String fileName) {
+		Debug.print(this, "Create: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
 			String meet = addResultsFile(file);
 			if (meet != null) {
 				listFrame.newRaceInMeet(meet);
-				// TODO notify each member of raceFrameList
+				for (RaceFrame raceFrame: raceFrameList) {
+					raceFrame.newRace(file);
+				}
 			}
 		}
 	}
 
 	@Override
 	public void deleteFileEvent(String fileName) {
+		Debug.print(this, "Delete: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
 			String meet = DolphinFile.getMeetFromFile(file);
@@ -128,8 +133,10 @@ public class Application implements ResultsListener {
 					for (Race race : raceList) {
 						if (raceNumber.equals(race.getRaceNumber())) {
 							raceList.remove(race);
-							listFrame.removedRaceFromMeet(meet);
-							// TODO notify each member of raceFrameList
+							listFrame.refreshMeet(meet);
+							for (RaceFrame raceFrame: raceFrameList) {
+								raceFrame.removeRace(file);
+							}
 							break;
 						}
 					}
@@ -140,15 +147,32 @@ public class Application implements ResultsListener {
 
 	@Override
 	public void modifyFileEvent(String fileName) {
-		System.out.println("Modify: "+fileName);
+		Debug.print(this, "Modify: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
-			if (debug) System.out.println("fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
+			Debug.print(this, "fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
+			File file = new File(fileName);
+			String meet = DolphinFile.getMeetFromFile(file);
+			if (meet != null) {
+				String raceNumber = DolphinFile.getRaceFromFile(file);
+				List<Race> raceList = meetMap.get(meet);
+				if (raceList != null) {
+					for (Race race: raceList) {
+						if (race.getRaceNumber().equals(raceNumber)) {
+							raceList.remove(race);
+							Race newRace = new Race(file);
+							if (newRace.isValid()) {
+								raceList.add(newRace);
+							}
+							listFrame.refreshMeet(meet);
+							for (RaceFrame raceFrame: raceFrameList) {
+								raceFrame.updateRace(file);
+							}
+						}
+					}
+				}				
+			}
 		}
-		
-		// TODO Auto-generated method stub
 	}
-
-
 
 	private class ListFrame extends JFrame implements MeetListener, ResultsPanelListener {
 		private static final long serialVersionUID = 1L;
@@ -185,6 +209,7 @@ public class Application implements ResultsListener {
 
 		@Override
 		public void detailRequest(String raceNumber) {
+			Debug.print(this, "detailRequest: "+raceNumber);
 			RaceFrame raceFrame = new RaceFrame();
 			raceFrame.setMeet(meetPanel.getSelectedMeet());
 			raceFrame.setRace(raceNumber);
@@ -212,7 +237,7 @@ public class Application implements ResultsListener {
 			}
 		}
 
-		public void removedRaceFromMeet(String meet) {
+		public void refreshMeet(String meet) {
 			if (meet.equals(meetPanel.getSelectedMeet())) {
 				raceListPanel.setRaceList(meetMap.get(meet));
 			}
@@ -227,13 +252,15 @@ public class Application implements ResultsListener {
 
 		RaceFrame () {
 			setTitle("Dolphin Times");
-			setSize(450, 300);
+//			setSize(450, 300);
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-			RaceFrame thisFrame = this;
 			this.addWindowListener(new WindowAdapter() {
 				@Override
 				public void windowClosing(WindowEvent we) {
-					removeRaceFrame(thisFrame);
+					Object o = we.getSource();
+					if (o instanceof RaceFrame) {
+						removeRaceFrame((RaceFrame)o);
+					}
 				}
 			});
 			JPanel contentPanel = new JPanel();
@@ -265,6 +292,34 @@ public class Application implements ResultsListener {
 
 		public void setMeet(String meet)       { meetPanel.setMeet(meet); }
 		public void setRace(String raceNumber) { racePanel.setRace(raceNumber); }
+		public void newRace(File newRaceFile) {
+			Debug.print(this, "newRace: "+newRaceFile.getName());
+			String newMeet = DolphinFile.getMeetFromFile(newRaceFile);
+			Integer newMeetNumber = Integer.valueOf(newMeet);
+			Integer selectedMeet = Integer.valueOf(meetPanel.getSelectedMeet());
+			if (newMeetNumber == selectedMeet) {
+				racePanel.addRace(DolphinFile.getRaceFromFile(newRaceFile));
+			} else if (newMeetNumber > selectedMeet) {
+				meetPanel.addMeet(newMeet);
+			}
+		}
+		public void removeRace(File removedFile) {
+			Debug.print(this, "removeRace: "+removedFile.getName());
+			String meet = DolphinFile.getMeetFromFile(removedFile);
+			if (meet.equals(meetPanel.getSelectedMeet())) {
+				// TODO the following needs to clear the resultsPanel if it is showing
+				// the race being removed, this relies on RacePanel JComboBox generating an
+				// action event with a null selection - which will drive us into resultsPanel.clearRace()
+				// needs checking, also check that the combo display is blank.
+				// It's possible that after clearing the comboBox it might autoselect the topmost entry....
+				racePanel.removeRace(DolphinFile.getRaceFromFile(removedFile));
+			}	
+		}
+		public void updateRace(File updatedFile) {
+			Debug.print(this, "updateRace: "+updatedFile.getName());
+			removeRace(updatedFile);
+			newRace(updatedFile);
+		}
 	}
 
 	private void removeRaceFrame(RaceFrame raceFrame) {
