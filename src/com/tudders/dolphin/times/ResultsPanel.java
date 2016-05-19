@@ -3,14 +3,13 @@ package com.tudders.dolphin.times;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -34,8 +33,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.KeyEvent;
 
-public class ResultsPanel extends JPanel implements ActionListener, MouseListener {
+public class ResultsPanel extends JPanel implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	// the Dolphin timer can handle 10 lanes
 	private static final int MAX_LANE_COUNT = 10;
@@ -53,6 +53,7 @@ public class ResultsPanel extends JPanel implements ActionListener, MouseListene
 	private boolean detailMode;
 	private JLabel headerLabelRace;
 	private JLabel headerLabelRaceNumber;
+	private JButton viewButton;
 	private JCheckBox showRawTextCheckBox;
 	private JTable resultsTable;
 	private JScrollPane scrollPane;
@@ -68,6 +69,7 @@ public class ResultsPanel extends JPanel implements ActionListener, MouseListene
 	}
 
 	public ResultsPanel(boolean detailMode) {
+		super.setLayout(new BorderLayout());
 		this.detailMode = detailMode;
 		tableFontSize = Integer.valueOf(Application.getProperty("table.font.size", Application.getProperty("font.size", String.valueOf(0))));
 		if (tableFontSize != 0 && tableFontSize < MIN_FONT_SIZE) tableFontSize = MIN_FONT_SIZE;
@@ -78,36 +80,58 @@ public class ResultsPanel extends JPanel implements ActionListener, MouseListene
 		laneCount = Integer.valueOf(Application.getProperty("lane.count", String.valueOf(DEFAULT_LANE_COUNT)));
 		if (laneCount > MAX_LANE_COUNT) laneCount = MAX_LANE_COUNT;
 		setBorder(new CompoundBorder(new BevelBorder(BevelBorder.RAISED), new EmptyBorder(2, 2, 2, 2)));
-		super.setLayout(new BorderLayout());
 		JPanel header = new JPanel();
+		header.setAlignmentX(Component.LEFT_ALIGNMENT);
 		header.setBackground(HEADER_BACKGROUND_COLOR);
 		header.setLayout(new BoxLayout(header, BoxLayout.PAGE_AXIS));
+		header.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		headerLabelRace = new JLabel("Race:");
+		headerLabelRace.setVerticalAlignment(SwingConstants.BOTTOM);
 		headerLabelRace.setForeground(HEADER_FOREGROUND_COLOR);
+		headerLabelRace.setAlignmentY(Component.BOTTOM_ALIGNMENT);
+		headerLabelRace.setBorder(BorderFactory.createEmptyBorder());
 		headerLabelRaceNumber = new JLabel("");
+		headerLabelRaceNumber.setVerticalAlignment(SwingConstants.BOTTOM);
 		headerLabelRaceNumber.setForeground(HEADER_FOREGROUND_COLOR);
-		if (headerFontSize != 0) headerLabelRaceNumber.setFont(new Font("Tahoma", Font.PLAIN, headerFontSize));
-		headerLabelRaceNumber.setHorizontalAlignment(SwingConstants.RIGHT);
-		headerLabelRace.setBorder(new EmptyBorder(0, 5, 0, 0));
-		headerLabelRaceNumber.setBorder(new EmptyBorder(0, 0, 0, 2));
+		headerLabelRaceNumber.setAlignmentY(Component.BOTTOM_ALIGNMENT);
+		headerLabelRaceNumber.setBorder(BorderFactory.createEmptyBorder());
+		if (headerFontSize != 0) headerLabelRaceNumber.setFont(new Font(headerLabelRaceNumber.getFont().getFamily(), Font.PLAIN, headerFontSize));
+		if (!detailMode) {
+			viewButton = new JButton("View...");
+			viewButton.setBorder(BorderFactory.createEmptyBorder(1, 3, 1, 3));
+			viewButton.setFont(new Font(viewButton.getFont().getFamily(), Font.PLAIN, 9));
+			viewButton.setAlignmentY(Component.BOTTOM_ALIGNMENT);
+			viewButton.setFocusable(false);
+			viewButton.addActionListener(this);
+		}
 		JPanel headerPanel = new JPanel();
+		headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.LINE_AXIS));
 		headerPanel.setBackground(HEADER_BACKGROUND_COLOR);
 		headerPanel.add(headerLabelRace);
-		headerPanel.add(Box.createGlue());
-		headerPanel.add(headerLabelRaceNumber);
-		headerPanel.setAlignmentX(LEFT_ALIGNMENT);
-		if (!detailMode) {
-			headerPanel.addMouseListener(this);
+		if (detailMode) {
+			headerPanel.add(Box.createGlue());
+		} else {			
+			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 		}
+		headerPanel.add(headerLabelRaceNumber);
+		if (!detailMode) {
+			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
+			headerPanel.add(Box.createGlue());
+			headerPanel.add(viewButton);
+		}
+		headerPanel.setAlignmentX(LEFT_ALIGNMENT);
 		header.add(headerPanel);
 
 		if (detailMode) {
-			header.add(Box.createRigidArea(new Dimension(0, 5)));
+			header.add(Box.createRigidArea(new Dimension(0, 3)));
 			showRawTextCheckBox = new JCheckBox("Show Raw text");
+			showRawTextCheckBox.setMnemonic(KeyEvent.VK_S);
 			showRawTextCheckBox.setContentAreaFilled(false);
+			showRawTextCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
 			showRawTextCheckBox.addActionListener(this);
 			showRawTextCheckBox.setForeground(HEADER_FOREGROUND_COLOR);
+			showRawTextCheckBox.setBorder(BorderFactory.createEmptyBorder());
 			header.add(showRawTextCheckBox);
 		}
 		add(header, BorderLayout.PAGE_START);
@@ -160,6 +184,11 @@ public class ResultsPanel extends JPanel implements ActionListener, MouseListene
 	}
 
 	@Override
+	public void setLayout(LayoutManager layoutManager) {
+		// Don't allow change of LayoutManager
+	}
+
+	@Override
 	public void actionPerformed(ActionEvent event) {
 		if ("Show Raw text".equals(event.getActionCommand())) {
 			if (showRawTextCheckBox.isSelected()) {
@@ -171,12 +200,13 @@ public class ResultsPanel extends JPanel implements ActionListener, MouseListene
 			}
 			revalidate();
 			repaint();
+		} else if ("View...".equals(event.getActionCommand())) {
+			if (raceNumber != null) {
+				for(ResultsPanelListener resultsPanelListener: resultsPanelListeners){
+					resultsPanelListener.detailRequest(raceNumber);
+				}
+			}
 		}
-	}
-
-	@Override
-	public void setLayout(LayoutManager layoutManager) {
-		// Don't allow change of LayoutManager
 	}
 
 	public void clearRace() {
@@ -231,21 +261,6 @@ public class ResultsPanel extends JPanel implements ActionListener, MouseListene
 			return columnEditables[column];
 		}
 	}
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		if (e.getClickCount() == 2) {
-			if (raceNumber != null) {
-				for(ResultsPanelListener resultsPanelListener: resultsPanelListeners){
-					resultsPanelListener.detailRequest(raceNumber);
-				}
-			}
-		}
-	}
-	@Override public void mouseEntered(MouseEvent e) {}
-	@Override public void mouseExited(MouseEvent e) {}
-	@Override public void mousePressed(MouseEvent e) {}
-	@Override public void mouseReleased(MouseEvent e) {}
 
 	public void addResultsPanelListener(ResultsPanelListener resultsPanelListener){
 		resultsPanelListeners.add(resultsPanelListener);

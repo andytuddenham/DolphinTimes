@@ -7,6 +7,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -153,6 +155,16 @@ public class RaceListPanel extends JPanel {
 			}
 		});
 		JScrollPane scrollPane = new JScrollPane(displayPanel);
+		scrollPane.setFocusable(true);
+		scrollPane.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				Object o = e.getSource();
+				if (o instanceof JScrollPane) {
+					((JScrollPane)o).requestFocusInWindow();
+				}
+			}
+		});
 		add(scrollPane, BorderLayout.CENTER);
 	}
 
