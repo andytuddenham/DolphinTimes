@@ -2,6 +2,8 @@ package com.tudders.dolphin.times;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -17,6 +19,7 @@ import java.util.Properties;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -191,11 +194,25 @@ public class Application implements ResultsListener {
 			});
 			JPanel contentPanel = new JPanel();
 			contentPanel.setLayout(new BorderLayout());
+			JPanel headerPanel = new JPanel();
+			headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.LINE_AXIS));
 			raceListPanel = new RaceListPanel(this);
 			meetPanel = new MeetPanel();
 			meetPanel.addMeetListener(this);
 			meetPanel.setMeetList(getMeetList(watchDir), meetDates);
-			contentPanel.add(meetPanel, BorderLayout.PAGE_START);
+			headerPanel.add(meetPanel);
+			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
+			headerPanel.add(Box.createGlue());
+			JButton helpButton = new JButton("Help...");
+			helpButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					HelpFrame helpFrame = new HelpFrame(listFrame);
+					helpFrame.setVisible(true);
+				}
+			});
+			headerPanel.add(helpButton);
+			contentPanel.add(headerPanel, BorderLayout.PAGE_START);
 			contentPanel.add(raceListPanel, BorderLayout.CENTER);
 			JLabel copyrightLabel = new JLabel(COPYRIGHT_TEXT);
 			copyrightLabel.setBorder(new EmptyBorder(2, 5, 2, 5));

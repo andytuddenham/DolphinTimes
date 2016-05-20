@@ -44,7 +44,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	private static final int MAX_FONT_SIZE = 24;
 	private static final Color HEADER_BACKGROUND_COLOR = new Color(0, 0, 139);
 	private static final Color HEADER_FOREGROUND_COLOR = Color.WHITE;
-	private static final Color TABLE_HEADER_BACKGROUND_COLOR = new Color(153, 180, 209);
+	private static final Color TABLE_HEADER_BACKGROUND_COLOR = new Color(127, 127, 255);
 	private static final Color TABLE_ODD_ROW_BACKGROUND_COLOR = new Color(193, 220, 249);
 	private static final Color TABLE_EVEN_ROW_BACKGROUND_COLOR = new Color(193, 249, 220);
 	private int laneCount;
