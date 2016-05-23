@@ -27,7 +27,11 @@ public class RaceListPanel extends JPanel {
 	public RaceListPanel(ResultsPanelListener resultsPanelListener) {
 		this.resultsPanelListener = resultsPanelListener;
 		super.setLayout(new BorderLayout());
-		maxRaceCount = Integer.valueOf(Application.getProperty("race.count", String.valueOf(Integer.MAX_VALUE)));
+		try {
+			maxRaceCount = Integer.valueOf(Application.getProperty("race.count", String.valueOf(Integer.MAX_VALUE)));
+		} catch (NumberFormatException nfe) {
+			maxRaceCount = Integer.MAX_VALUE;
+		}
 		displayPanel = new JPanel();
 		displayPanel.setLayout(new FlowLayout(FlowLayout.LEADING, 5, 5){
 			private static final long serialVersionUID = 1L;
