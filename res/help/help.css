@@ -1,20 +1,26 @@
-h1, h2 {white-space: nowrap; margin: 0;}
+h1, h2 {
+	font-family: sans-serif;
+	white-space: nowrap; margin: 0;
+}
 h1 {
-	background-color: #00008b;
-	border-bottom: 4px solid #7f7fff;
-	color: #ffffff;
+	background-color: #7f7fff;
+	border-bottom: 2px solid #000000;
 }
 h2 {
 	background-color: #c1dcf9;
-	border-bottom: 2px solid #7f7fff;
+	border-bottom: 2px solid #000000;
+	margin: 3px 0 0 0;
 }
 p {
-	margin: 0;
+	margin: 3px 0 0 0;
 }
-table, th, td {
-	border: 1px solid black;
+table {
 	border-collapse: collapse;
 	border-spacing: 0pt;
+}
+th, td {
+	border: 1px solid black;
+	padding: 0 3px;
 }
 th {
 	background-color: #7f7fff;
@@ -22,18 +28,6 @@ th {
 td {
 	background-color: #c1dcf9;
 }
-th, td {
-	padding: 0 3px;
-}
-/*
-table>thead>tr>th {
- border: 1px solid black;
-}
-table>tbody>tr>td {
-    border: 1px solid black;
-    padding: 0 3px;
-}
-*/
 pre {
 	background-color: #bfbfbf;
 	border: 1px solid black;

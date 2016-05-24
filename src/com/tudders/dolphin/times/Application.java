@@ -30,7 +30,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 
 public class Application implements ResultsListener {
-	private static final String COPYRIGHT_TEXT = "Release 0.3 - \u00a9 Andy Tuddenham 2016";
+	private static final String COPYRIGHT_TEXT = "Release 0.3a - \u00a9 Andy Tuddenham 2016";
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
 	private static Properties properties = null;
 	private ListFrame listFrame;
@@ -39,6 +39,7 @@ public class Application implements ResultsListener {
 	private Map<String, List<Race>> meetMap = null;
 	private Map<String, Date> meetDates = null;
 	private List<RaceFrame> raceFrameList = new ArrayList<RaceFrame>();
+	private HelpFrame helpFrame = null;
 
 	public Application(String watchDir) {
 		this.watchDir = watchDir;
@@ -104,6 +105,7 @@ public class Application implements ResultsListener {
 		for (RaceFrame raceFrame: raceFrameList) {
 			raceFrame.dispose();
 		}
+		if (helpFrame != null) helpFrame.dispose();
 		listFrame.dispose();
 		Debug.print(this, "appExit end");
 	}
@@ -207,7 +209,15 @@ public class Application implements ResultsListener {
 			helpButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
-					HelpFrame helpFrame = new HelpFrame(listFrame);
+					if (helpFrame == null) {
+						helpFrame = new HelpFrame(listFrame);
+						helpFrame.addWindowListener(new WindowAdapter() {
+							@Override
+							public void windowClosing(WindowEvent e) {
+								helpFrame = null;
+							}
+						});
+					}
 					helpFrame.setVisible(true);
 				}
 			});

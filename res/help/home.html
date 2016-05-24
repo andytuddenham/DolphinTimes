@@ -10,7 +10,7 @@
 <h2>The main window</h2>
 <p>The main window contains a number of race results, each race result has the race number at the top left, a table
 below that has details of the times swum by each lane arranged in &#039;finish time&#039; order. There is also a
-&#039;View...&#039; button at the top right which opens a new window containing just that race result.</p>
+&#039;View...&#039; button at the top right, see &#039;Keeping a race result displayed&#039;.</p>
 <p>The number of race results in the main window can be set in the DolphinTimes.properties file (see below).
  When this number is reached, new results are added at the top left and old ones are dropped.</p>
 <p>Here is an example of the main window using default settings</p>
@@ -22,13 +22,14 @@ below that has details of the times swum by each lane arranged in &#039;finish t
  a separate line with no spaces.</p>
 <p>The following &#039;key=value&#039; pairs can be used:
 <table>
-<thead><tr><th>key</th><th>default</th><th>description</th></tr></thead>
+<thead><tr><th>key</th><th>description</th><th>range</th><th>default</th></tr></thead>
 <tbody>
-<tr><td>lane.count</td><td>10</td><td>specifies the number of lanes in the pool</td></tr>
-<tr><td>race.count</td><td>all</td><td>specifies the number of results to keep in the main window (must be an integer)</td></tr>
-<tr><td>header.font.size</td><td>11</td><td>specifies the size of the text displaying the race number in the results header, must be between 8 and 24</td></tr>
-<tr><td>table.font.size</td><td>11</td><td>specifies the size of the text displaying the race results in the table, must be between 8 and 24</td></tr>
-<tr><td>font.size</td><td>11</td><td>specifies the size of the text if header.font.size or table.font.size are not specified, must be between 8 and 24</td></tr>
+<tr><td>lane.count</td><td>specifies the number of lanes in the pool</td><td>6, 8 or 10</td><td>10</td></tr>
+<tr><td>race.count</td><td>specifies the number of results to keep in the main window</td><td>any positive integer or all</td><td>all</td></tr>
+<tr><td>header.font.size</td><td>specifies the size of the text displaying the race number in the results header</td><td>8 to 24</td><td>11</td></tr>
+<tr><td>results.places</td><td>specifies weather to include the place numbers in the results table</td><td>true or false</td><td>false</td></tr>
+<tr><td>results.font.size</td><td>specifies the size of the text displaying the race results in the table</td><td>8 to 24</td><td>11</td></tr>
+<tr><td>font.size</td><td>specifies the size of the text if header.font.size or table.font.size are not specified</td><td>8 to 24</td><td>11</td></tr>
 </tbody>
 </table>
 <p>any line starting with a &#039;#&#039; is treated as a comment and ignored by the program.</p>
@@ -37,11 +38,16 @@ below that has details of the times swum by each lane arranged in &#039;finish t
 lane.count=8
 race.count=6
 header.font.size=16
-table.font.size=24
+results.places=false
+results.font.size=24
 #font.size=11
 </pre>
 <p>If any of these settings are changed, the program will need to be restarted before they will become effective.</p>
-<p>This is what the main window would lookl like with the above settings</p>
+<p>This is what the main window would look like with the above settings</p>
 <img src="help/images/mainwindow6results.gif" />
+<h2>Keeping a race result displayed</h2>
+<p>As mentioned earlier, if &#039;race.count&#039; has been set in the properties file, old race results will be dropped
+ from the main window when that number is reached. If you want to keep one of the race results displayed, you
+ can click the &#039;View...&#039; button and a copy of that race result will be opened in a new window.</p>
 </body>
 </html>

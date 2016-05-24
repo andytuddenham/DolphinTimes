@@ -4,6 +4,7 @@ import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -40,6 +41,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	// the Dolphin timer can handle 10 lanes
 	private static final int MAX_LANE_COUNT = 10;
 	private static final int DEFAULT_LANE_COUNT = MAX_LANE_COUNT;
+	private static final List<Integer> allowedLaneCounts = Arrays.asList(6, 8, DEFAULT_LANE_COUNT);
 	private static final int MIN_FONT_SIZE = 8;
 	private static final int MAX_FONT_SIZE = 24;
 	private static final Color HEADER_BACKGROUND_COLOR = new Color(0, 0, 139);
@@ -50,15 +52,18 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	private int laneCount;
 	private int tableFontSize = 0;
 	private int headerFontSize = 0;
+	private int laneColumn;
+	private int timeColumn;
 	private boolean detailMode;
+	private boolean includePlaces;
 	private JLabel headerLabelRace;
 	private JLabel headerLabelRaceNumber;
 	private JButton viewButton;
 	private JCheckBox showRawTextCheckBox;
 	private JTable resultsTable;
 	private JScrollPane scrollPane;
-	private String[] columnNames = {"Lane", "Time"};
-	private Object[][] tableData = new Object[0][2];
+	private String[] columnNames;
+	private Object[][] tableData;
 	private JTextArea rawTextArea;
 	private JScrollPane textScrollPane;
 	private String raceNumber = null;
@@ -71,14 +76,20 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	public ResultsPanel(boolean detailMode) {
 		super.setLayout(new BorderLayout());
 		this.detailMode = detailMode;
-		tableFontSize = Integer.valueOf(Application.getProperty("table.font.size", Application.getProperty("font.size", String.valueOf(0))));
+		tableFontSize = Integer.valueOf(Application.getProperty("results.font.size", Application.getProperty("font.size", String.valueOf(0))));
 		if (tableFontSize != 0 && tableFontSize < MIN_FONT_SIZE) tableFontSize = MIN_FONT_SIZE;
 		if (tableFontSize != 0 && tableFontSize > MAX_FONT_SIZE) tableFontSize = MAX_FONT_SIZE;
 		headerFontSize = Integer.valueOf(Application.getProperty("header.font.size", Application.getProperty("font.size", String.valueOf(0))));
 		if (headerFontSize != 0 && headerFontSize < MIN_FONT_SIZE) headerFontSize = MIN_FONT_SIZE;
 		if (headerFontSize != 0 && headerFontSize > MAX_FONT_SIZE) headerFontSize = MAX_FONT_SIZE;
-		laneCount = Integer.valueOf(Application.getProperty("lane.count", String.valueOf(DEFAULT_LANE_COUNT)));
-		if (laneCount > MAX_LANE_COUNT) laneCount = MAX_LANE_COUNT;
+		try {
+			laneCount = Integer.valueOf(Application.getProperty("lane.count", String.valueOf(DEFAULT_LANE_COUNT)));
+		} catch (NumberFormatException nfe) {
+			laneCount = DEFAULT_LANE_COUNT;
+		}
+		if (!allowedLaneCounts.contains(laneCount)) laneCount = DEFAULT_LANE_COUNT;
+		String includePlacesProperty =  Application.getProperty("results.places", "false").toLowerCase();
+		includePlaces = "true".equals(includePlacesProperty);
 		setBorder(new CompoundBorder(new BevelBorder(BevelBorder.RAISED), new EmptyBorder(2, 2, 2, 2)));
 		JPanel header = new JPanel();
 		header.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -152,13 +163,31 @@ public class ResultsPanel extends JPanel implements ActionListener {
 			resultsTable.setFont(new Font("Tahoma", Font.PLAIN, tableFontSize));
 			resultsTable.setRowHeight(normalTableRowHeight-normalTableFontSize+tableFontSize);
 		}
-		resultsTable.setPreferredScrollableViewportSize(new Dimension(140, ((tableFontSize == 0 ? normalTableFontSize : tableFontSize)+normalTableRowHeight-normalTableFontSize)*laneCount));
+		resultsTable.setPreferredScrollableViewportSize(new Dimension((includePlaces ? 180 : 140), ((tableFontSize == 0 ? normalTableFontSize : tableFontSize)+normalTableRowHeight-normalTableFontSize)*laneCount));
 		resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		resultsTable.setModel(new ResultsTableModel(tableData, columnNames));
-		resultsTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-		resultsTable.getColumnModel().getColumn(0).setMinWidth(33);
-		resultsTable.getColumnModel().getColumn(1).setPreferredWidth(100);
-		resultsTable.getColumnModel().getColumn(1).setMinWidth(60);
+		if (includePlaces) {
+			laneColumn = 1;
+			timeColumn = 2;
+			columnNames = new String[] {"Place", "Lane", "Time"};
+			tableData = new Object[0][3];
+			resultsTable.setModel(new ResultsTableModel(tableData, columnNames));
+			resultsTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+			resultsTable.getColumnModel().getColumn(0).setMinWidth(33);
+			resultsTable.getColumnModel().getColumn(laneColumn).setPreferredWidth(40);
+			resultsTable.getColumnModel().getColumn(laneColumn).setMinWidth(33);
+			resultsTable.getColumnModel().getColumn(timeColumn).setPreferredWidth(100);
+			resultsTable.getColumnModel().getColumn(timeColumn).setMinWidth(60);
+		} else {
+			laneColumn = 0;
+			timeColumn = 1;
+			columnNames = new String[] {"Lane", "Time"};
+			tableData = new Object[0][2];
+			resultsTable.setModel(new ResultsTableModel(tableData, columnNames));
+			resultsTable.getColumnModel().getColumn(laneColumn).setPreferredWidth(40);
+			resultsTable.getColumnModel().getColumn(laneColumn).setMinWidth(33);
+			resultsTable.getColumnModel().getColumn(timeColumn).setPreferredWidth(100);
+			resultsTable.getColumnModel().getColumn(timeColumn).setMinWidth(60);
+		}
 		JTableHeader tableHeader = resultsTable.getTableHeader();
 
 		final TableCellRenderer headerCellRenderer = tableHeader.getDefaultRenderer();
@@ -166,7 +195,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 				JLabel label = (JLabel)headerCellRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-				label.setBorder(new CompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, (column == 0 ? 1 : 0), Color.GRAY), BorderFactory.createEmptyBorder(2, 1, 2, 1)));
+				label.setBorder(new CompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, (column != timeColumn ? 1 : 0), Color.GRAY), BorderFactory.createEmptyBorder(2, 1, 2, 1)));
 				label.setHorizontalAlignment(JLabel.CENTER);
 				label.setBackground(TABLE_HEADER_BACKGROUND_COLOR);
 				return label;
@@ -174,7 +203,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		});
 		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
 		rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
-		resultsTable.getColumnModel().getColumn(1).setCellRenderer(rightRenderer);
+		resultsTable.getColumnModel().getColumn(timeColumn).setCellRenderer(rightRenderer);
 		scrollPane = new JScrollPane(resultsTable);
 		add(scrollPane, BorderLayout.CENTER);
 		if (detailMode) {
@@ -227,8 +256,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		ResultsTableModel resultsTableModel = (ResultsTableModel)resultsTable.getModel();
 		resultsTableModel.setRowCount(results.size());
 		for (int index = 0; index < results.size(); index++) {
+			if (includePlaces) {
+				resultsTableModel.setValueAt(index+1, index, 0);
+			}
 			Result result = results.get(index);
-			resultsTableModel.setValueAt(result.getLaneNumber(), index, 0);
+			resultsTableModel.setValueAt(result.getLaneNumber(), index, laneColumn);
 			String time = result.getTime();
 			Double seconds = Double.valueOf(time);
 			Integer minutes;
@@ -237,7 +269,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				seconds = seconds%60;
 				time = String.format("%d:%05.2f", minutes, seconds);
 			}
-			resultsTableModel.setValueAt(time, index, 1);
+			resultsTableModel.setValueAt(time, index, timeColumn);
 		}
 	}
 
@@ -248,17 +280,17 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		}
 		@SuppressWarnings("rawtypes")
 		Class[] columnTypes = new Class[] {
-				Integer.class, String.class
+				Integer.class, Integer.class, String.class
 		};
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Class getColumnClass(int columnIndex) {
-			return columnTypes[columnIndex];
+			return columnTypes[(includePlaces ? columnIndex : columnIndex+1)];
 		}
 		boolean[] columnEditables = new boolean[] {
-				false, false
+				false, false, false
 		};
 		public boolean isCellEditable(int row, int column) {
-			return columnEditables[column];
+			return columnEditables[(includePlaces ? column : column+1)];
 		}
 	}
 
