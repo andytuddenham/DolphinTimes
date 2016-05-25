@@ -37,6 +37,7 @@ public class ResultsWatcherThread extends Thread {
 				}
 				for (WatchEvent<?> event : key.pollEvents()) {
 					WatchEvent.Kind<?> kind = event.kind();
+					@SuppressWarnings("unchecked")
 					WatchEvent<Path> watchEvent = (WatchEvent<Path>)event;
 					Path filePath = watchEvent.context();
 					String fileName = watchedDirectory+(watchedDirectory.endsWith(File.separator) ? "" : File.separator)+filePath;

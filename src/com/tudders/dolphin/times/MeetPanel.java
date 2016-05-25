@@ -55,13 +55,13 @@ public class MeetPanel extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent event) {
 		if ("comboBoxChanged".equals(event.getActionCommand())) {
 			for(MeetListener meetListener: meetListeners){
-				String meet = (String)((JComboBox)event.getSource()).getSelectedItem();
+				String meet = (String)((JComboBox<?>)event.getSource()).getSelectedItem();
 				if (meet == null) {
 					meetListener.clearMeetEvent();
 					dateLabel.setText("");
 				} else {
-					meetListener.selectMeetEvent((String)((JComboBox)event.getSource()).getSelectedItem());
-					dateLabel.setText(new SimpleDateFormat("dd/MM/yyyy").format(meetDates.get((String)((JComboBox)event.getSource()).getSelectedItem())));
+					meetListener.selectMeetEvent((String)((JComboBox<?>)event.getSource()).getSelectedItem());
+					dateLabel.setText(new SimpleDateFormat("dd/MM/yyyy").format(meetDates.get((String)((JComboBox<?>)event.getSource()).getSelectedItem())));
 				}
 			}
 		}

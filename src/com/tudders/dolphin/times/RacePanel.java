@@ -53,7 +53,7 @@ public class RacePanel extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		if ("comboBoxChanged".equals(event.getActionCommand())) {
-			String raceNumber = (String)((JComboBox)event.getSource()).getSelectedItem();
+			String raceNumber = (String)((JComboBox<?>)event.getSource()).getSelectedItem();
 			Debug.print(this, "selected race "+raceNumber);
 			Race selectedRace = null;
 			if (raceNumber == null) {
