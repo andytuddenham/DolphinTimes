@@ -61,7 +61,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	private JButton viewButton;
 	private JCheckBox showRawTextCheckBox;
 	private JTable resultsTable;
-	private JScrollPane scrollPane;
+	private JPanel tablePanel;
 	private String[] columnNames;
 	private Object[][] tableData;
 	private JTextArea rawTextArea;
@@ -163,7 +163,6 @@ public class ResultsPanel extends JPanel implements ActionListener {
 			resultsTable.setFont(new Font("Tahoma", Font.PLAIN, tableFontSize));
 			resultsTable.setRowHeight(normalTableRowHeight-normalTableFontSize+tableFontSize);
 		}
-		resultsTable.setPreferredScrollableViewportSize(new Dimension((includePlaces ? 180 : 140), ((tableFontSize == 0 ? normalTableFontSize : tableFontSize)+normalTableRowHeight-normalTableFontSize)*laneCount));
 		resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		if (includePlaces) {
 			laneColumn = 1;
@@ -204,8 +203,12 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
 		rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
 		resultsTable.getColumnModel().getColumn(timeColumn).setCellRenderer(rightRenderer);
-		scrollPane = new JScrollPane(resultsTable);
-		add(scrollPane, BorderLayout.CENTER);
+		tablePanel = new JPanel();
+		tablePanel.setLayout(new BoxLayout(tablePanel, BoxLayout.PAGE_AXIS));
+		tablePanel.add(tableHeader);
+		tablePanel.add(resultsTable);
+		resultsTable.setPreferredSize(new Dimension((includePlaces ? 180 : 140), ((tableFontSize == 0 ? normalTableFontSize : tableFontSize)+normalTableRowHeight-normalTableFontSize)*laneCount));
+		add(tablePanel, BorderLayout.CENTER);
 		if (detailMode) {
 			rawTextArea = new JTextArea("");
 			textScrollPane = new JScrollPane(rawTextArea);
@@ -221,11 +224,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent event) {
 		if ("Show Raw text".equals(event.getActionCommand())) {
 			if (showRawTextCheckBox.isSelected()) {
-				remove(scrollPane);
+				remove(tablePanel);
 				add(textScrollPane, BorderLayout.CENTER);
 			} else {
 				remove(textScrollPane);
-				add(scrollPane, BorderLayout.CENTER);
+				add(tablePanel, BorderLayout.CENTER);
 			}
 			revalidate();
 			repaint();
@@ -255,13 +258,21 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		List<Result> results = race.getRaceResults();
 		ResultsTableModel resultsTableModel = (ResultsTableModel)resultsTable.getModel();
 		resultsTableModel.setRowCount(results.size());
+		int previousIndex = -1;
+		String previousTime = null;
+		boolean tiedTime = false;
 		for (int index = 0; index < results.size(); index++) {
-			if (includePlaces) {
-				resultsTableModel.setValueAt(index+1, index, 0);
-			}
 			Result result = results.get(index);
-			resultsTableModel.setValueAt(result.getLaneNumber(), index, laneColumn);
 			String time = result.getTime();
+			if (includePlaces) {
+				if (previousTime != null && previousTime.equals(time)) {
+					tiedTime = true;
+				} else {
+					tiedTime = false;
+				}
+				resultsTableModel.setValueAt(tiedTime ? previousIndex+1 : index+1, index, 0);
+			}
+			resultsTableModel.setValueAt(result.getLaneNumber(), index, laneColumn);
 			Double seconds = Double.valueOf(time);
 			Integer minutes;
 			if (seconds > 60) {
@@ -270,6 +281,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				time = String.format("%d:%05.2f", minutes, seconds);
 			}
 			resultsTableModel.setValueAt(time, index, timeColumn);
+			if (!tiedTime) previousIndex = index;
+			previousTime = time;
 		}
 	}
 

@@ -30,7 +30,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 
 public class Application implements ResultsListener {
-	private static final String COPYRIGHT_TEXT = "Release 0.3a - \u00a9 Andy Tuddenham 2016";
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
 	private static Properties properties = null;
 	private ListFrame listFrame;
@@ -67,6 +66,7 @@ public class Application implements ResultsListener {
 			if (race.isValid()) {
 				raceList.add(race);
 			}
+			Debug.print(this, "race "+(race != null ? race.getRaceNumber() : "null")+" is"+(race.isValid() ? " " : " not ")+"valid "+(race.getRaceResults() == null ? "race==null" : "size="+race.getRaceResults().size()));
 		}
 		return meet;
 	}
@@ -224,7 +224,7 @@ public class Application implements ResultsListener {
 			headerPanel.add(helpButton);
 			contentPanel.add(headerPanel, BorderLayout.PAGE_START);
 			contentPanel.add(raceListPanel, BorderLayout.CENTER);
-			JLabel copyrightLabel = new JLabel(COPYRIGHT_TEXT);
+			JLabel copyrightLabel = new JLabel(Version.getCopyrightText());
 			copyrightLabel.setBorder(new EmptyBorder(2, 5, 2, 5));
 			copyrightLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			contentPanel.add(copyrightLabel, BorderLayout.PAGE_END);
@@ -261,6 +261,7 @@ public class Application implements ResultsListener {
 				raceListPanel.setRaceList(meetMap.get(meet));
 			} else if (newMeet > selectedMeet) {
 				meetPanel.setMeetList(new ArrayList<String>(meetMap.keySet()), meetDates);
+				raceListPanel.setRaceList(meetMap.get(meet));
 			}
 		}
 
@@ -303,7 +304,7 @@ public class Application implements ResultsListener {
 			contentPanel.add(racePanel);
 			contentPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 			contentPanel.add(resultsPanel);
-			JLabel copyrightLabel = new JLabel(COPYRIGHT_TEXT);
+			JLabel copyrightLabel = new JLabel(Version.getCopyrightText());
 			copyrightLabel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
 			contentPanel.add(Box.createVerticalGlue());
 			contentPanel.add(copyrightLabel);
