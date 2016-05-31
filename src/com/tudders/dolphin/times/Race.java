@@ -51,10 +51,14 @@ public class Race {
 				Collections.sort(results, new ResultComparator());
 			}
 		} catch (FileNotFoundException fnfe) {
-			// TODO Auto-generated catch block
+			if (results!= null){
+				results.clear();
+			}
 			fnfe.printStackTrace();
 		} catch (IOException ioe) {
-			// TODO Auto-generated catch block
+			if (results!= null){
+				results.clear();
+			}
 			ioe.printStackTrace();
 		} finally {
 			if (br != null) try {br.close();} catch(IOException ioe) {}

@@ -86,6 +86,7 @@ public class Application implements ResultsListener {
 	}
 
 	public void start() {
+		listFrame.meetPanel.setDefaultMeet();
 		listFrame.setVisible(true);
 		resultsWatcherThread = new ResultsWatcherThread(watchDir);
 		resultsWatcherThread.setName("Results Watcher");

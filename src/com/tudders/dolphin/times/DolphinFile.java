@@ -7,8 +7,6 @@ public class DolphinFile {
 	private static final String fileNamePattern = "\\d{3}-\\d{3}-\\d{2}[TPSF]\\d{4}";
 	private static final String DEFAULT_RESULTS_PATH = "C:\\CTSDolphin\\";
 
-	// TODO look at converting this class to extend java.io.File
-
 	private DolphinFile() {
 		// prevent instantiation of this class
 	}

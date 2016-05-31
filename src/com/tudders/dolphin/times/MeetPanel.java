@@ -1,5 +1,6 @@
 package com.tudders.dolphin.times;
 
+import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,14 +12,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JComboBox;
-
-import java.awt.Dimension;
-
-import javax.swing.Box;
 import javax.swing.border.EmptyBorder;
 
 public class MeetPanel extends JPanel implements ActionListener {
@@ -54,8 +53,8 @@ public class MeetPanel extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		if ("comboBoxChanged".equals(event.getActionCommand())) {
-			for(MeetListener meetListener: meetListeners){
-				String meet = (String)((JComboBox<?>)event.getSource()).getSelectedItem();
+			for (MeetListener meetListener: meetListeners) {
+				String meet = (String)((JComboBox<?>) event.getSource()).getSelectedItem();
 				if (meet == null) {
 					meetListener.clearMeetEvent();
 					dateLabel.setText("");
@@ -80,9 +79,15 @@ public class MeetPanel extends JPanel implements ActionListener {
 		Collections.sort(meetList, new MeetComparator());
 		meetComboBox.removeAllItems();
 		if (!meetList.isEmpty()) {
-			for (String meet : meetList) {
-				meetComboBox.addItem(meet);
-			}
+			//using ComboBoxModel prevents event being fired
+			DefaultComboBoxModel<String> meetComboBoxModel = new DefaultComboBoxModel<String>(meetList.toArray(new String[0]));
+			meetComboBox.setModel(meetComboBoxModel);
+		}
+	}
+
+	public void setDefaultMeet() {
+		if (meetComboBox.getItemCount() > 0) {
+			meetComboBox.setSelectedIndex(0);
 		}
 	}
 
@@ -97,12 +102,12 @@ public class MeetPanel extends JPanel implements ActionListener {
 		}
 	}
 
-	public void addMeetListener(MeetListener meetListener){
+	public void addMeetListener(MeetListener meetListener) {
 		meetListeners.add(meetListener);
 	}
-	
-	public void removeMeetListener(MeetListener meetListener){
-		if(meetListeners.contains(meetListener)){
+
+	public void removeMeetListener(MeetListener meetListener) {
+		if (meetListeners.contains(meetListener)) {
 			meetListeners.remove(meetListener);
 		}
 	}
@@ -112,6 +117,6 @@ public class MeetPanel extends JPanel implements ActionListener {
 		public int compare(String a, String b) {
 			// sort in reverse order so that latest (higher meet number) is at the top of the combo box
 			return b.compareToIgnoreCase(a);
-		}		
+		}
 	}
 }
