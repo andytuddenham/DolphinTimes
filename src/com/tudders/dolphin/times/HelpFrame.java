@@ -15,6 +15,7 @@ public class HelpFrame extends JFrame {
 
 	HelpFrame(JFrame parent) {
 		setTitle("Dolphin Times - Help");
+		Application.setFrameIcon(this);
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() {
 			@Override
