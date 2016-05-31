@@ -30,7 +30,7 @@ public class HelpFrame extends JFrame {
 		JEditorPane editorPane = new JEditorPane();
 		editorPane.setEditable(false);
 		editorPane.setContentType("text/html");
-		URL url = this.getClass().getClassLoader().getResource("help/home.html");
+		URL url = this.getClass().getResource("/help/home.html");
 		try {
 			editorPane.setPage(url);
 		} catch (Exception e) {
