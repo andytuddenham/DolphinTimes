@@ -29,6 +29,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -91,7 +92,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		if (!allowedLaneCounts.contains(laneCount)) laneCount = DEFAULT_LANE_COUNT;
 		String includePlacesProperty =  Application.getProperty("results.places", "false").toLowerCase();
 		includePlaces = "true".equals(includePlacesProperty);
-		setBorder(new CompoundBorder(new BevelBorder(BevelBorder.RAISED), new EmptyBorder(2, 2, 2, 2)));
+		setBorder(new LineBorder(Color.GRAY, 1));
 		JPanel header = new JPanel();
 		header.setAlignmentX(Component.LEFT_ALIGNMENT);
 		header.setBackground(HEADER_BACKGROUND_COLOR);
@@ -107,6 +108,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		headerLabelRaceNumber.setForeground(HEADER_FOREGROUND_COLOR);
 		headerLabelRaceNumber.setAlignmentY(Component.BOTTOM_ALIGNMENT);
 		headerLabelRaceNumber.setBorder(BorderFactory.createEmptyBorder());
+		int normalLabelFontSize = headerLabelRaceNumber.getFont().getSize();
 		if (headerFontSize != 0) headerLabelRaceNumber.setFont(new Font(headerLabelRaceNumber.getFont().getFamily(), Font.PLAIN, headerFontSize));
 		if (!detailMode) {
 			viewButton = new JButton("View...");
@@ -209,11 +211,12 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		tablePanel.add(tableHeader);
 		tablePanel.add(resultsTable);
 		tablePanel.add(Box.createVerticalGlue());
-		resultsTable.setPreferredSize(new Dimension((includePlaces ? 180 : 140), ((tableFontSize == 0 ? normalTableFontSize : tableFontSize)+normalTableRowHeight-normalTableFontSize)*laneCount));
+		resultsTable.setPreferredSize(new Dimension((includePlaces ? 180 : 140), (detailMode && headerFontSize > normalLabelFontSize ? headerFontSize-normalLabelFontSize+1 : 0)+((tableFontSize == 0 ? normalTableFontSize : tableFontSize)+normalTableRowHeight-normalTableFontSize)*laneCount));
 		
 		add(tablePanel, BorderLayout.CENTER);
 		if (detailMode) {
 			rawTextArea = new JTextArea("");
+			rawTextArea.setEditable(false);
 			textScrollPane = new JScrollPane(rawTextArea);
 		}
 	}

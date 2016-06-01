@@ -315,11 +315,11 @@ public class Application implements ResultsListener {
 			contentPanel.add(racePanel);
 			contentPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 			contentPanel.add(resultsPanel);
-			JLabel copyrightLabel = new JLabel(Version.getCopyrightText());
-			copyrightLabel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
-			contentPanel.add(Box.createVerticalGlue());
-			contentPanel.add(copyrightLabel);
 			getContentPane().add(contentPanel, BorderLayout.CENTER);
+			JLabel copyrightLabel = new JLabel(Version.getCopyrightText());
+			copyrightLabel.setBorder(new EmptyBorder(2, 5, 2, 5));
+			copyrightLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			getContentPane().add(copyrightLabel, BorderLayout.PAGE_END);
 			pack();
 			setLocationRelativeTo(null);
 		}
