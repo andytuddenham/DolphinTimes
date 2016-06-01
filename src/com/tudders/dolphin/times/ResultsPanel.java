@@ -25,6 +25,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -232,8 +233,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				remove(textScrollPane);
 				add(tablePanel, BorderLayout.CENTER);
 			}
-			revalidate();
-			repaint();
+			refresh();
 		} else if ("View...".equals(event.getActionCommand())) {
 			if (raceNumber != null) {
 				for(ResultsPanelListener resultsPanelListener: resultsPanelListeners){
@@ -241,6 +241,16 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				}
 			}
 		}
+	}
+
+	private void refresh() {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				revalidate();
+				repaint();
+			}
+		});
 	}
 
 	public void clearRace() {

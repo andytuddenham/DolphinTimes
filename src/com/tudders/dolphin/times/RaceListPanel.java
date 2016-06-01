@@ -54,11 +54,20 @@ public class RaceListPanel extends JPanel {
 		// Don't allow change of LayoutManager
 	}
 
+	private void refresh() {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				revalidate();
+				repaint();
+			}
+		});
+	}
+
 	public void clearRaceList() {
 		displayPanel.removeAll();
 		raceCount = 0;
-		revalidate();
-		repaint();
+		refresh();
 	}
 
 	public void setRaceList(List<Race> raceList) {
@@ -80,8 +89,7 @@ public class RaceListPanel extends JPanel {
 //			scrollPane.getVerticalScrollBar().setUnitIncrement(increment < 10 ? 10 : increment);
 			scrollPane.getVerticalScrollBar().setUnitIncrement(10);
 		}
-		revalidate();
-		repaint();
+		refresh();
 	}
 
 	private class RaceComparator implements Comparator<Race> {
@@ -220,8 +228,8 @@ public class RaceListPanel extends JPanel {
 			dim.height += rowHeight;
 			tallestRowHeight = Math.max(tallestRowHeight, rowHeight);
 		}
-		public int getRowHeight() {
-			return tallestRowHeight+getVgap();
-		}
+//		public int getRowHeight() {
+//			return tallestRowHeight+getVgap();
+//		}
 	}
 }

@@ -163,18 +163,23 @@ public class Application implements ResultsListener {
 				String raceNumber = DolphinFile.getRaceFromFile(file);
 				List<Race> raceList = meetMap.get(meet);
 				if (raceList != null) {
+					Race raceToUpdate = null;
 					for (Race race: raceList) {
 						if (race.getRaceNumber().equals(raceNumber)) {
-							raceList.remove(race);
-							Race newRace = new Race(file);
-							if (newRace.isValid()) {
-								raceList.add(newRace);
-							}
-							listFrame.refreshMeet(meet);
-							for (RaceFrame raceFrame: raceFrameList) {
-								raceFrame.updateRace(file);
-							}
+							raceToUpdate = race;
+							break;
 						}
+					}
+					if (raceToUpdate != null) {
+						raceList.remove(raceToUpdate);
+					}
+					Race newRace = new Race(file);
+					if (newRace.isValid()) {
+						raceList.add(newRace);
+					}
+					listFrame.refreshMeet(meet);
+					for (RaceFrame raceFrame: raceFrameList) {
+						raceFrame.updateRace(file);
 					}
 				}				
 			}
