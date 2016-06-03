@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -23,8 +24,12 @@ public class RacePanel extends JPanel implements ActionListener {
 	private JComboBox<String> raceComboBox;
 	private JLabel eventLabel;
 	private JLabel heatLabel;
+	private static final Logger logger = Logger.getLogger(RacePanel.class.getName());
+
+	// TODO implement more logging 
 
 	public RacePanel() {
+		logger.setLevel(Application.getLoggingLevel(RacePanel.class.getName()));
 		super.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setBorder(new EmptyBorder(2, 2, 2, 2));
 		JLabel raceLabel = new JLabel("Race:");
@@ -54,7 +59,7 @@ public class RacePanel extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent event) {
 		if ("comboBoxChanged".equals(event.getActionCommand())) {
 			String raceNumber = (String)((JComboBox<?>)event.getSource()).getSelectedItem();
-			Debug.print(this, "selected race "+raceNumber);
+			logger.fine("selected race "+raceNumber);
 			Race selectedRace = null;
 			if (raceNumber == null) {
 				eventLabel.setText("");

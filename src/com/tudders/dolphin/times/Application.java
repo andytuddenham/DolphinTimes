@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -31,6 +33,8 @@ import javax.swing.border.EmptyBorder;
 
 public class Application implements ResultsListener {
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
+	private static final String DEFAULT_LOGGING_LEVEL = "OFF";
+	private static final String LOGGING_SUFFIX = "logging";
 	private static Properties properties = null;
 	private ListFrame listFrame;
 	private String watchDir;
@@ -39,16 +43,21 @@ public class Application implements ResultsListener {
 	private Map<String, Date> meetDates = null;
 	private List<RaceFrame> raceFrameList = new ArrayList<RaceFrame>();
 	private HelpFrame helpFrame = null;
+	private static final Logger logger = Logger.getLogger(Application.class.getName());
 
 	public Application(String watchDir) {
+		logger.setLevel(getLoggingLevel(Application.class.getName()));
 		this.watchDir = watchDir;
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e1) {}
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+			logger.log(Level.WARNING, "Caught exception", e);
+		}
 		listFrame = new ListFrame();
 	}
 
 	private String addResultsFile(File file) {
+		logger.finer("file: "+file.getAbsolutePath());
 		String meet = DolphinFile.getMeetFromFile(file);
 		if (meet != null) {
 			Date modifiedDate = new Date(file.lastModified());
@@ -66,13 +75,15 @@ public class Application implements ResultsListener {
 			if (race.isValid()) {
 				raceList.add(race);
 			}
-			Debug.print(this, "race "+(race != null ? race.getRaceNumber() : "null")+" is"+(race.isValid() ? " " : " not ")+"valid "+(race.getRaceResults() == null ? "race==null" : "size="+race.getRaceResults().size()));
+			logger.finest("race "+(race != null ? race.getRaceNumber() : "null")+" is"+(race.isValid() ? " " : " not ")+"valid "+(race.getRaceResults() == null ? "race==null" : "size="+race.getRaceResults().size()));
 		}
 		return meet;
 	}
 
-	private List<String> getMeetList(String watchDir) {
+	private List<String> getMeetList() {
+		logger.info("watchDir: "+watchDir);
 		if (meetMap == null) {
+			logger.fine("Creating meetMap/meetDates");
 			meetMap = new HashMap<String, List<Race>>();
 			meetDates = new HashMap<String, Date>();
 			File fileWatchDir = new File(watchDir);
@@ -80,44 +91,51 @@ public class Application implements ResultsListener {
 				for (File file : fileWatchDir.listFiles()) {
 					addResultsFile(file);
 				}
+			} else {
+				logger.warning("Watch directory "+watchDir+" is not a directory");
 			}
 		}
 		return new ArrayList<String>(meetMap.keySet());
 	}
 
 	public void start() {
+		logger.info("Starting application");
 		listFrame.meetPanel.setDefaultMeet();
 		listFrame.setVisible(true);
 		resultsWatcherThread = new ResultsWatcherThread(watchDir);
 		resultsWatcherThread.setName("Results Watcher");
 		resultsWatcherThread.addResultsListener(this);
 		resultsWatcherThread.start();
+		logger.info("Application started");
 	}
 
 	private void appExit() {
-		Debug.print(this, "appExit start");
+		logger.info("Application shutdown starting");
 		if (resultsWatcherThread != null) {
 			resultsWatcherThread.removeResultsListener(this);
 			resultsWatcherThread.shutdown();
 			try {
+				logger.fine("Waiting for "+resultsWatcherThread.getName()+" to end");
 				resultsWatcherThread.join();
 			} catch (InterruptedException e) {}
 		}
+		logger.fine("Closing frames");
 		for (RaceFrame raceFrame: raceFrameList) {
 			raceFrame.dispose();
 		}
 		if (helpFrame != null) helpFrame.dispose();
 		listFrame.dispose();
-		Debug.print(this, "appExit end");
+		logger.info("Application shutdown complete");
 	}
 
 	@Override
 	public void createFileEvent(String fileName) {
-		Debug.print(this, "Create: "+fileName);
+		logger.fine("Create: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
 			String meet = addResultsFile(file);
 			if (meet != null) {
+				logger.finer("Updating frames for meet "+meet);
 				listFrame.newRaceInMeet(meet);
 				for (RaceFrame raceFrame: raceFrameList) {
 					raceFrame.newRace(file);
@@ -128,7 +146,7 @@ public class Application implements ResultsListener {
 
 	@Override
 	public void deleteFileEvent(String fileName) {
-		Debug.print(this, "Delete: "+fileName);
+		logger.fine("Delete: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
 			String meet = DolphinFile.getMeetFromFile(file);
@@ -138,6 +156,7 @@ public class Application implements ResultsListener {
 				if (raceList != null) {
 					for (Race race : raceList) {
 						if (raceNumber.equals(race.getRaceNumber())) {
+							logger.finer("Updating frames for meet "+meet+" race "+raceNumber);
 							raceList.remove(race);
 							listFrame.refreshMeet(meet);
 							for (RaceFrame raceFrame: raceFrameList) {
@@ -153,13 +172,14 @@ public class Application implements ResultsListener {
 
 	@Override
 	public void modifyFileEvent(String fileName) {
-		Debug.print(this, "Modify: "+fileName);
+		logger.fine("Modify: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
-			Debug.print(this, "fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
+			logger.finer("fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
 			File file = new File(fileName);
 			String meet = DolphinFile.getMeetFromFile(file);
 			if (meet != null) {
 				String raceNumber = DolphinFile.getRaceFromFile(file);
+				logger.finer("meet: "+meet+" race "+raceNumber);
 				List<Race> raceList = meetMap.get(meet);
 				if (raceList != null) {
 					Race raceToUpdate = null;
@@ -176,6 +196,7 @@ public class Application implements ResultsListener {
 					if (newRace.isValid()) {
 						raceList.add(newRace);
 					}
+					logger.finer("Updating frames for meet "+meet+" race "+raceNumber);
 					listFrame.refreshMeet(meet);
 					for (RaceFrame raceFrame: raceFrameList) {
 						raceFrame.updateRace(file);
@@ -185,7 +206,7 @@ public class Application implements ResultsListener {
 		}
 	}
 	
-	public static void setFrameIcon(JFrame frame){
+	public static void setFrameIcon(JFrame frame) {
 		frame.setIconImage(Toolkit.getDefaultToolkit().createImage(frame.getClass().getResource("/images/DolphinTimesLogo.png")));
 	}
 
@@ -193,8 +214,10 @@ public class Application implements ResultsListener {
 		private static final long serialVersionUID = 1L;
 		private MeetPanel meetPanel;
 		private RaceListPanel raceListPanel;
+		private final Logger logger = Logger.getLogger(ListFrame.class.getName());
 
 		ListFrame() {
+			logger.setLevel(getLoggingLevel(logger.getName()));
 			setTitle("Dolphin Times");
 			setFrameIcon(this);
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -211,7 +234,7 @@ public class Application implements ResultsListener {
 			raceListPanel = new RaceListPanel(this);
 			meetPanel = new MeetPanel();
 			meetPanel.addMeetListener(this);
-			meetPanel.setMeetList(getMeetList(watchDir), meetDates);
+			meetPanel.setMeetList(getMeetList(), meetDates);
 			headerPanel.add(meetPanel);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(Box.createGlue());
@@ -246,7 +269,7 @@ public class Application implements ResultsListener {
 
 		@Override
 		public void detailRequest(String raceNumber) {
-			Debug.print(this, "detailRequest: "+raceNumber);
+			logger.finer("raceNumber: "+raceNumber);
 			RaceFrame raceFrame = new RaceFrame();
 			raceFrame.setMeet(meetPanel.getSelectedMeet());
 			raceFrame.setRace(raceNumber);
@@ -267,15 +290,17 @@ public class Application implements ResultsListener {
 		public void newRaceInMeet(String meet) {
 			Integer newMeet = Integer.valueOf(meet);
 			Integer selectedMeet = Integer.valueOf(meetPanel.getSelectedMeet());
+			logger.finer("newMeet "+newMeet+", selectedMeet "+selectedMeet);
 			if (newMeet == selectedMeet) {
 				raceListPanel.setRaceList(meetMap.get(meet));
 			} else if (newMeet > selectedMeet) {
-				meetPanel.setMeetList(new ArrayList<String>(meetMap.keySet()), meetDates);
+				meetPanel.setMeetList(getMeetList(), meetDates);
 				raceListPanel.setRaceList(meetMap.get(meet));
 			}
 		}
 
 		public void refreshMeet(String meet) {
+			logger.finer("meet "+meet);
 			if (meet.equals(meetPanel.getSelectedMeet())) {
 				raceListPanel.setRaceList(meetMap.get(meet));
 			}
@@ -287,8 +312,10 @@ public class Application implements ResultsListener {
 		private MeetPanel meetPanel;
 		private RacePanel racePanel;
 		private ResultsPanel resultsPanel;
+		private final Logger logger = Logger.getLogger(RaceFrame.class.getName());
 
 		RaceFrame () {
+			logger.setLevel(getLoggingLevel(logger.getName()));
 			setTitle("Dolphin Times");
 			setFrameIcon(this);
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -308,7 +335,7 @@ public class Application implements ResultsListener {
 			racePanel.addRaceListener(this);
 			meetPanel = new MeetPanel();
 			meetPanel.addMeetListener(this);
-			meetPanel.setMeetList(new ArrayList<String>(meetMap.keySet()), meetDates);
+			meetPanel.setMeetList(getMeetList(), meetDates);
 			contentPanel.add(meetPanel);
 			contentPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 			contentPanel.add(racePanel);
@@ -331,7 +358,7 @@ public class Application implements ResultsListener {
 		public void setMeet(String meet)       { meetPanel.setMeet(meet); }
 		public void setRace(String raceNumber) { racePanel.setRace(raceNumber); }
 		public void newRace(File newRaceFile) {
-			Debug.print(this, "newRace: "+newRaceFile.getName());
+			logger.finer("newRaceFile: "+newRaceFile.getName());
 			String newMeet = DolphinFile.getMeetFromFile(newRaceFile);
 			Integer newMeetNumber = Integer.valueOf(newMeet);
 			Integer selectedMeet = Integer.valueOf(meetPanel.getSelectedMeet());
@@ -342,7 +369,7 @@ public class Application implements ResultsListener {
 			}
 		}
 		public void removeRace(File removedFile) {
-			Debug.print(this, "removeRace: "+removedFile.getName());
+			logger.finer("removedFile: "+removedFile.getName());
 			String meet = DolphinFile.getMeetFromFile(removedFile);
 			if (meet.equals(meetPanel.getSelectedMeet())) {
 				// TODO the following needs to clear the resultsPanel if it is showing
@@ -354,7 +381,7 @@ public class Application implements ResultsListener {
 			}	
 		}
 		public void updateRace(File updatedFile) {
-			Debug.print(this, "updateRace: "+updatedFile.getName());
+			logger.finer("updatedFile: "+updatedFile.getName());
 			removeRace(updatedFile);
 			newRace(updatedFile);
 		}
@@ -374,12 +401,12 @@ public class Application implements ResultsListener {
 			try {
 				properties.load(new FileReader(propertiesFileName));
 			} catch (FileNotFoundException fnfe) {
-//				error = fnfe;
+				logger.log(Level.WARNING, "properties file not found, using default values", fnfe);
 			} catch (IOException ioe) {
 				error = ioe;
 			} finally {
 				if (error != null) {
-					System.err.println("Error: "+error.getLocalizedMessage());
+					logger.log(Level.SEVERE, "Error", error);
 					System.exit(0);
 				}
 			}
@@ -393,6 +420,23 @@ public class Application implements ResultsListener {
 			propertiesFileName = DEFAULT_PROPERTIES_FILE;
 		}
 		loadProperties(propertiesFileName);
+	}
+
+	public static Level getLoggingLevel(String className) {
+		String propertyValue = getProperty(className.substring(className.lastIndexOf('.')+1)  +"."+LOGGING_SUFFIX, getProperty(LOGGING_SUFFIX, DEFAULT_LOGGING_LEVEL));
+		if (propertyValue == null) propertyValue = DEFAULT_LOGGING_LEVEL;
+		propertyValue = propertyValue.toLowerCase();
+		switch (propertyValue) {
+		case "all"     : return Level.ALL;
+		case "fine"    : return Level.FINE;
+		case "finer"   : return Level.FINER;
+		case "finest"  : return Level.FINEST;
+		case "config"  : return Level.CONFIG;
+		case "info"    : return Level.INFO;
+		case "warning" : return Level.WARNING;
+		case "severe"  : return Level.SEVERE;
+		}
+		return Level.OFF;
 	}
 
 	public static String getProperty(String propertyName, String defaultPropertyValue) {

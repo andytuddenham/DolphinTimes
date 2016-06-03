@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,12 +20,16 @@ public class Race {
 	private StringBuilder fileData = new StringBuilder();
 	private List<Result> results;
 	private Pattern pattern = Pattern.compile("^(\\d{1,2});([0-9.]+);([^;]*);([^;]*)$");
+	private static final Logger logger = Logger.getLogger(MeetPanel.class.getName());
+
+	// TODO implement more logging 
 
 	public Race(File file) {
+		logger.setLevel(Application.getLoggingLevel(Race.class.getName()));
 		this.race = DolphinFile.getRaceFromFile(file);
 		this.event = DolphinFile.getEventFromFile(file);
 		this.heat = DolphinFile.getHeatFromFile(file);
-		Debug.print(this, "file="+file.getAbsolutePath());
+		logger.fine("file="+file.getAbsolutePath());
 		results = new ArrayList<Result>();
 		BufferedReader br = null;
 		try {
@@ -34,17 +39,19 @@ public class Race {
 				fileData.append(line+"\n");
 				Matcher matcher = pattern.matcher(line);
 				boolean matched = matcher.matches();
-				Debug.print(this, "line: '"+line+"' matches="+matched);
+				logger.finer("line: '"+line+"' matches="+matched);
 				if (matched) {
 					Integer lane = Integer.valueOf(matcher.group(1));
 					String time = matcher.group(2);
 					if (lane == 0 && "0".equals(time) && "1".equals(matcher.group(3)) && "A".equals(matcher.group(4))) {
-						Debug.print(this, "eliminating '0;0;1;A'");
+						logger.finest("eliminating '0;0;1;A'");
 					} else {
 						Result result = new Result(lane, time);
 						results.add(result);
-						Debug.print(this, "Added result [lane "+result.getLaneNumber()+" : "+result.getTime()+"]");
+						logger.finest("Added result [lane "+result.getLaneNumber()+" : "+result.getTime()+"]");
 					}
+				} else {
+					logger.finest("line not matched");
 				}
 			}
 			if (!results.isEmpty()) {

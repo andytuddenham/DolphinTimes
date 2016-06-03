@@ -12,6 +12,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -24,8 +25,12 @@ public class RaceListPanel extends JPanel {
 	private JPanel displayPanel;
 	private ResultsPanelListener resultsPanelListener;
 	private JScrollPane scrollPane;
+	private static final Logger logger = Logger.getLogger(RaceListPanel.class.getName());
+
+	// TODO implement logging 
 
 	public RaceListPanel(ResultsPanelListener resultsPanelListener) {
+		logger.setLevel(Application.getLoggingLevel(RaceListPanel.class.getName()));
 		this.resultsPanelListener = resultsPanelListener;
 		super.setLayout(new BorderLayout());
 		try {

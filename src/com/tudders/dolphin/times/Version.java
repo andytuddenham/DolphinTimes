@@ -1,7 +1,7 @@
 package com.tudders.dolphin.times;
 
 public class Version {
-	private static final String VERSION = "Version 0.3c";
+	private static final String VERSION = "Version 0.4";
 	private static final String COPYRIGHT_TEXT = VERSION+" \u00a9 Andy & Mark Tuddenham 2016";
 
 	public static void main(String[] args) {

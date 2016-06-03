@@ -10,20 +10,24 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ResultsWatcherThread extends Thread {
 	private String watchedDirectory;
 	private boolean run;
 	private List<ResultsListener> resultsListeners = new ArrayList<ResultsListener>();
+	private static final Logger logger = Logger.getLogger(ResultsWatcherThread.class.getName());
 
 	public ResultsWatcherThread(String watchedDirectory) {
+		logger.setLevel(Application.getLoggingLevel(ResultsWatcherThread.class.getName()));
 		run = true;
 		this.watchedDirectory = watchedDirectory;
 	}
 
 	@Override
 	public void run() {
-		Debug.print(this, "started");
+		logger.info(Thread.currentThread().getName()+" started");
 		try {
 			WatchService watcher = FileSystems.getDefault().newWatchService();
 			Path watchPath = FileSystems.getDefault().getPath(watchedDirectory);
@@ -41,7 +45,7 @@ public class ResultsWatcherThread extends Thread {
 					WatchEvent<Path> watchEvent = (WatchEvent<Path>)event;
 					Path filePath = watchEvent.context();
 					String fileName = watchedDirectory+(watchedDirectory.endsWith(File.separator) ? "" : File.separator)+filePath;
-					Debug.print(this, kind.name()+": "+fileName);
+					logger.info(kind.name()+": "+fileName);
 					switch (kind.name()) {
 					case "OVERFLOW":
 						break;
@@ -65,16 +69,14 @@ public class ResultsWatcherThread extends Thread {
 				}
 				boolean hasReset = key.reset();
 				if (!hasReset) {
-					Debug.print(this, "Failed to reset the key!");
-					System.err.println("Failed to reset the key!");
+					logger.warning("Failed to reset the key!");
 					break;
 				}
 			}
 		} catch (IOException e) {
-			Debug.print(this, "caught "+e.getLocalizedMessage());
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Caught exception", e);
 		}
-		Debug.print(this, "ended");
+		logger.info(Thread.currentThread().getName()+" ended");
 	}
 
 	public void addResultsListener(ResultsListener resultsListener){
@@ -88,7 +90,7 @@ public class ResultsWatcherThread extends Thread {
 	}
 
 	public void shutdown() {
-		Debug.print(this, "shutting down");
+		logger.info("Shutdown called by "+Thread.currentThread().getName());
 		run = false;
 		interrupt();
 	}
