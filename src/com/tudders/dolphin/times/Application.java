@@ -44,6 +44,7 @@ public class Application implements ResultsListener {
 	private List<RaceFrame> raceFrameList = new ArrayList<RaceFrame>();
 	private HelpFrame helpFrame = null;
 	private static final Logger logger = Logger.getLogger(Application.class.getName());
+	private static final Map<String, Level> loggingMap = new HashMap<String, Level>();
 
 	public Application(String watchDir) {
 		logger.setLevel(getLoggingLevel(Application.class.getName()));
@@ -423,20 +424,22 @@ public class Application implements ResultsListener {
 	}
 
 	public static Level getLoggingLevel(String className) {
+		if (loggingMap.containsKey(className)) return loggingMap.get(className);
 		String propertyValue = getProperty(className.substring(className.lastIndexOf('.')+1)  +"."+LOGGING_SUFFIX, getProperty(LOGGING_SUFFIX, DEFAULT_LOGGING_LEVEL));
 		if (propertyValue == null) propertyValue = DEFAULT_LOGGING_LEVEL;
 		propertyValue = propertyValue.toLowerCase();
 		switch (propertyValue) {
-		case "all"     : return Level.ALL;
-		case "fine"    : return Level.FINE;
-		case "finer"   : return Level.FINER;
-		case "finest"  : return Level.FINEST;
-		case "config"  : return Level.CONFIG;
-		case "info"    : return Level.INFO;
-		case "warning" : return Level.WARNING;
-		case "severe"  : return Level.SEVERE;
+		case "all"     : loggingMap.put(className, Level.ALL);     break;
+		case "fine"    : loggingMap.put(className, Level.FINE);    break;
+		case "finer"   : loggingMap.put(className, Level.FINER);   break;
+		case "finest"  : loggingMap.put(className, Level.FINEST);  break;
+		case "config"  : loggingMap.put(className, Level.CONFIG);  break;
+		case "info"    : loggingMap.put(className, Level.INFO);    break;
+		case "warning" : loggingMap.put(className, Level.WARNING); break;
+		case "severe"  : loggingMap.put(className, Level.SEVERE);  break;
+		default        : loggingMap.put(className, Level.OFF);     break;
 		}
-		return Level.OFF;
+		return loggingMap.get(className);
 	}
 
 	public static String getProperty(String propertyName, String defaultPropertyValue) {
