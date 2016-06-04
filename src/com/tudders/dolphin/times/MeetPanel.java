@@ -80,6 +80,9 @@ public class MeetPanel extends JPanel implements ActionListener {
 	}
 
 	public void setMeetList(List<String> meetList, Map<String, Date> meetDates) {
+		// TODO the meetList (which is derived from Application's meetMap.keySet()) should be identical
+		// to the keySet of meetDates, so maybe we only need meetDates.
+		// TODO also see the todo in Application.deleteFileEvent that mentions creating a new Meet class.
 		this.meetDates = meetDates;
 		Collections.sort(meetList, new MeetComparator());
 		meetComboBox.removeAllItems();

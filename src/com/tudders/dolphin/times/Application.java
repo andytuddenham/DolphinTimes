@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -39,9 +40,9 @@ public class Application implements ResultsListener {
 	private ListFrame listFrame;
 	private String watchDir;
 	private ResultsWatcherThread resultsWatcherThread = null;
-	private Map<String, List<Race>> meetMap = null;
-	private Map<String, Date> meetDates = null;
-	private List<RaceFrame> raceFrameList = new ArrayList<RaceFrame>();
+	private final Map<String, List<Race>> meetMap = Collections.synchronizedMap(new HashMap<String, List<Race>>());
+	private final Map<String, Date> meetDates = Collections.synchronizedMap(new HashMap<String, Date>());
+	private final List<RaceFrame> raceFrameList = Collections.synchronizedList(new ArrayList<RaceFrame>());
 	private HelpFrame helpFrame = null;
 	private static final Logger logger = Logger.getLogger(Application.class.getName());
 	private static final Map<String, Level> loggingMap = new HashMap<String, Level>();
@@ -62,14 +63,13 @@ public class Application implements ResultsListener {
 		String meet = DolphinFile.getMeetFromFile(file);
 		if (meet != null) {
 			Date modifiedDate = new Date(file.lastModified());
-			List<Race> raceList;
-			if (meetMap.containsKey(meet)) {
-				raceList = meetMap.get(meet);
-			} else {
+			List<Race> raceList = meetMap.get(meet);
+			if (raceList == null) {
 				raceList = new ArrayList<Race>();
 				meetMap.put(meet, raceList);
 			}
-			if (!meetDates.containsKey(meet) || modifiedDate.getTime() < meetDates.get(meet).getTime()) {
+			Date date = meetDates.get(meet);
+			if (date == null || modifiedDate.getTime() < date.getTime()) {
 				meetDates.put(meet, modifiedDate);
 			}
 			Race race = new Race(file);
@@ -83,18 +83,13 @@ public class Application implements ResultsListener {
 
 	private List<String> getMeetList() {
 		logger.info("watchDir: "+watchDir);
-		if (meetMap == null) {
-			logger.fine("Creating meetMap/meetDates");
-			meetMap = new HashMap<String, List<Race>>();
-			meetDates = new HashMap<String, Date>();
-			File fileWatchDir = new File(watchDir);
-			if (fileWatchDir.isDirectory()) {
-				for (File file : fileWatchDir.listFiles()) {
-					addResultsFile(file);
-				}
-			} else {
-				logger.warning("Watch directory "+watchDir+" is not a directory");
+		File fileWatchDir = new File(watchDir);
+		if (fileWatchDir.isDirectory()) {
+			for (File file : fileWatchDir.listFiles()) {
+				addResultsFile(file);
 			}
+		} else {
+			logger.warning("Watch directory "+watchDir+" is not a directory");
 		}
 		return new ArrayList<String>(meetMap.keySet());
 	}
@@ -159,6 +154,10 @@ public class Application implements ResultsListener {
 						if (raceNumber.equals(race.getRaceNumber())) {
 							logger.finer("Updating frames for meet "+meet+" race "+raceNumber);
 							raceList.remove(race);
+							// TODO test if raceList is now empty
+							// if so, remove meet from meetList and meetDates and notify listFrame and raceFrameList that meet is gone
+							// TODO come to think of it, consider creating a meet object and encapsulating the race list and date in
+							// a new Meet class.
 							listFrame.refreshMeet(meet);
 							for (RaceFrame raceFrame: raceFrameList) {
 								raceFrame.removeRace(file);
@@ -424,20 +423,22 @@ public class Application implements ResultsListener {
 	}
 
 	public static Level getLoggingLevel(String className) {
-		if (loggingMap.containsKey(className)) return loggingMap.get(className);
-		String propertyValue = getProperty(className.substring(className.lastIndexOf('.')+1)  +"."+LOGGING_SUFFIX, getProperty(LOGGING_SUFFIX, DEFAULT_LOGGING_LEVEL));
-		if (propertyValue == null) propertyValue = DEFAULT_LOGGING_LEVEL;
-		propertyValue = propertyValue.toLowerCase();
-		switch (propertyValue) {
-		case "all"     : loggingMap.put(className, Level.ALL);     break;
-		case "fine"    : loggingMap.put(className, Level.FINE);    break;
-		case "finer"   : loggingMap.put(className, Level.FINER);   break;
-		case "finest"  : loggingMap.put(className, Level.FINEST);  break;
-		case "config"  : loggingMap.put(className, Level.CONFIG);  break;
-		case "info"    : loggingMap.put(className, Level.INFO);    break;
-		case "warning" : loggingMap.put(className, Level.WARNING); break;
-		case "severe"  : loggingMap.put(className, Level.SEVERE);  break;
-		default        : loggingMap.put(className, Level.OFF);     break;
+		synchronized (loggingMap) {
+			if (loggingMap.containsKey(className)) return loggingMap.get(className);
+			String propertyValue = getProperty(className.substring(className.lastIndexOf('.')+1)  +"."+LOGGING_SUFFIX, getProperty(LOGGING_SUFFIX, DEFAULT_LOGGING_LEVEL));
+			if (propertyValue == null) propertyValue = DEFAULT_LOGGING_LEVEL;
+			propertyValue = propertyValue.toLowerCase();
+			switch (propertyValue) {
+			case "all"     : loggingMap.put(className, Level.ALL);     break;
+			case "fine"    : loggingMap.put(className, Level.FINE);    break;
+			case "finer"   : loggingMap.put(className, Level.FINER);   break;
+			case "finest"  : loggingMap.put(className, Level.FINEST);  break;
+			case "config"  : loggingMap.put(className, Level.CONFIG);  break;
+			case "info"    : loggingMap.put(className, Level.INFO);    break;
+			case "warning" : loggingMap.put(className, Level.WARNING); break;
+			case "severe"  : loggingMap.put(className, Level.SEVERE);  break;
+			default        : loggingMap.put(className, Level.OFF);     break;
+			}
 		}
 		return loggingMap.get(className);
 	}
