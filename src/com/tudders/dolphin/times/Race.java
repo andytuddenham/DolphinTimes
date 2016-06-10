@@ -20,7 +20,7 @@ public class Race {
 	private StringBuilder fileData = new StringBuilder();
 	private List<Result> results;
 	private Pattern pattern = Pattern.compile("^(\\d{1,2});([0-9.]+);([^;]*);([^;]*)$");
-	private static final Logger logger = Logger.getLogger(MeetPanel.class.getName());
+	private static final Logger logger = Logger.getLogger(Race.class.getName());
 
 	// TODO implement more logging 
 
