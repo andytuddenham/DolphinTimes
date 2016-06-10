@@ -430,9 +430,9 @@ public class Application implements ResultsListener {
 			propertyValue = propertyValue.toLowerCase();
 			switch (propertyValue) {
 			case "all"     : loggingMap.put(className, Level.ALL);     break;
-			case "fine"    : loggingMap.put(className, Level.FINE);    break;
-			case "finer"   : loggingMap.put(className, Level.FINER);   break;
 			case "finest"  : loggingMap.put(className, Level.FINEST);  break;
+			case "finer"   : loggingMap.put(className, Level.FINER);   break;
+			case "fine"    : loggingMap.put(className, Level.FINE);    break;
 			case "config"  : loggingMap.put(className, Level.CONFIG);  break;
 			case "info"    : loggingMap.put(className, Level.INFO);    break;
 			case "warning" : loggingMap.put(className, Level.WARNING); break;
