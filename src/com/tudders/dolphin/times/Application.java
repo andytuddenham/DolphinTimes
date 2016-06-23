@@ -12,14 +12,17 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -44,11 +47,25 @@ public class Application implements ResultsListener {
 	private final Map<String, Date> meetDates = Collections.synchronizedMap(new HashMap<String, Date>());
 	private final List<RaceFrame> raceFrameList = Collections.synchronizedList(new ArrayList<RaceFrame>());
 	private HelpFrame helpFrame = null;
-	private static final Logger logger = Logger.getLogger(Application.class.getName());
 	private static final Map<String, Level> loggingMap = new HashMap<String, Level>();
+	private static final Logger logger;
+	private static FileHandler fileHandler;
+
+	static {
+		Calendar calendar = Calendar.getInstance();
+		try {
+			String date = String.format("%1$tY%1$tm%1$te", calendar);
+			fileHandler = new FileHandler("%h/DolphinTimes."+date+".log", true);
+			fileHandler.setFormatter(new SimpleFormatter());
+		} catch (SecurityException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			fileHandler = null;
+		}
+		logger = getLogger(Application.class.getName());
+	}
 
 	public Application(String watchDir) {
-		logger.setLevel(getLoggingLevel(Application.class.getName()));
 		this.watchDir = watchDir;
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -81,7 +98,7 @@ public class Application implements ResultsListener {
 		return meet;
 	}
 
-	private List<String> getMeetList() {
+	private List<String> initMeetList() {
 		logger.info("watchDir: "+watchDir);
 		File fileWatchDir = new File(watchDir);
 		if (fileWatchDir.isDirectory()) {
@@ -91,6 +108,10 @@ public class Application implements ResultsListener {
 		} else {
 			logger.warning("Watch directory "+watchDir+" is not a directory");
 		}
+		return getMeetList();
+	}
+
+	private List<String> getMeetList() {
 		return new ArrayList<String>(meetMap.keySet());
 	}
 
@@ -126,12 +147,12 @@ public class Application implements ResultsListener {
 
 	@Override
 	public void createFileEvent(String fileName) {
-		logger.fine("Create: "+fileName);
+		logger.info("Create: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
 			String meet = addResultsFile(file);
 			if (meet != null) {
-				logger.finer("Updating frames for meet "+meet);
+				logger.fine("Updating frames for meet "+meet+" race count="+meetMap.get(meet).size());
 				listFrame.newRaceInMeet(meet);
 				for (RaceFrame raceFrame: raceFrameList) {
 					raceFrame.newRace(file);
@@ -142,7 +163,7 @@ public class Application implements ResultsListener {
 
 	@Override
 	public void deleteFileEvent(String fileName) {
-		logger.fine("Delete: "+fileName);
+		logger.info("Delete: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
 			String meet = DolphinFile.getMeetFromFile(file);
@@ -172,14 +193,13 @@ public class Application implements ResultsListener {
 
 	@Override
 	public void modifyFileEvent(String fileName) {
-		logger.fine("Modify: "+fileName);
+		logger.info("Modify: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
-			logger.finer("fileName: "+fileName.substring(0, fileName.lastIndexOf('.')));
 			File file = new File(fileName);
 			String meet = DolphinFile.getMeetFromFile(file);
 			if (meet != null) {
 				String raceNumber = DolphinFile.getRaceFromFile(file);
-				logger.finer("meet: "+meet+" race "+raceNumber);
+				logger.fine("meet: "+meet+" race "+raceNumber);
 				List<Race> raceList = meetMap.get(meet);
 				if (raceList != null) {
 					Race raceToUpdate = null;
@@ -196,7 +216,7 @@ public class Application implements ResultsListener {
 					if (newRace.isValid()) {
 						raceList.add(newRace);
 					}
-					logger.finer("Updating frames for meet "+meet+" race "+raceNumber);
+					logger.fine("Updating frames for meet "+meet+" race "+raceNumber);
 					listFrame.refreshMeet(meet);
 					for (RaceFrame raceFrame: raceFrameList) {
 						raceFrame.updateRace(file);
@@ -214,10 +234,10 @@ public class Application implements ResultsListener {
 		private static final long serialVersionUID = 1L;
 		private MeetPanel meetPanel;
 		private RaceListPanel raceListPanel;
-		private final Logger logger = Logger.getLogger(ListFrame.class.getName());
+		private final Logger logger = Application.getLogger(ListFrame.class.getName());
 
+		// TODO add logging
 		ListFrame() {
-			logger.setLevel(getLoggingLevel(logger.getName()));
 			setTitle("Dolphin Times");
 			setFrameIcon(this);
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -234,7 +254,7 @@ public class Application implements ResultsListener {
 			raceListPanel = new RaceListPanel(this);
 			meetPanel = new MeetPanel();
 			meetPanel.addMeetListener(this);
-			meetPanel.setMeetList(getMeetList(), meetDates);
+			meetPanel.setMeetList(initMeetList(), meetDates);
 			headerPanel.add(meetPanel);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(Box.createGlue());
@@ -312,10 +332,10 @@ public class Application implements ResultsListener {
 		private MeetPanel meetPanel;
 		private RacePanel racePanel;
 		private ResultsPanel resultsPanel;
-		private final Logger logger = Logger.getLogger(RaceFrame.class.getName());
+		private final Logger logger = Application.getLogger(RaceFrame.class.getName());
 
+		// TODO add logging
 		RaceFrame () {
-			logger.setLevel(getLoggingLevel(logger.getName()));
 			setTitle("Dolphin Times");
 			setFrameIcon(this);
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -394,6 +414,38 @@ public class Application implements ResultsListener {
 		}
 	}
 
+	public static Logger getLogger(String className) {
+		Logger logger = Logger.getLogger(className);
+		if (logger != null) {
+			logger.setLevel(getLoggingLevel(className));
+			if (fileHandler != null) logger.addHandler(fileHandler);
+		}
+		return logger;
+	}
+
+	private static Level getLoggingLevel(String className) {
+		synchronized (loggingMap) {
+			if (loggingMap.containsKey(className)) {
+				return loggingMap.get(className);
+			}
+			String propertyValue = getProperty(className.substring(className.lastIndexOf('.')+1)  +"."+LOGGING_SUFFIX, getProperty(LOGGING_SUFFIX, DEFAULT_LOGGING_LEVEL));
+			if (propertyValue == null) propertyValue = DEFAULT_LOGGING_LEVEL;
+			propertyValue = propertyValue.toLowerCase();
+			switch (propertyValue) {
+			case "all"     : loggingMap.put(className, Level.ALL);     break;
+			case "finest"  : loggingMap.put(className, Level.FINEST);  break;
+			case "finer"   : loggingMap.put(className, Level.FINER);   break;
+			case "fine"    : loggingMap.put(className, Level.FINE);    break;
+			case "config"  : loggingMap.put(className, Level.CONFIG);  break;
+			case "info"    : loggingMap.put(className, Level.INFO);    break;
+			case "warning" : loggingMap.put(className, Level.WARNING); break;
+			case "severe"  : loggingMap.put(className, Level.SEVERE);  break;
+			default        : loggingMap.put(className, Level.OFF);     break;
+			}
+		}
+		return loggingMap.get(className);
+	}
+
 	public static void loadProperties(String propertiesFileName) {
 		if (properties == null) {
 			properties = new Properties();
@@ -420,27 +472,6 @@ public class Application implements ResultsListener {
 			propertiesFileName = DEFAULT_PROPERTIES_FILE;
 		}
 		loadProperties(propertiesFileName);
-	}
-
-	public static Level getLoggingLevel(String className) {
-		synchronized (loggingMap) {
-			if (loggingMap.containsKey(className)) return loggingMap.get(className);
-			String propertyValue = getProperty(className.substring(className.lastIndexOf('.')+1)  +"."+LOGGING_SUFFIX, getProperty(LOGGING_SUFFIX, DEFAULT_LOGGING_LEVEL));
-			if (propertyValue == null) propertyValue = DEFAULT_LOGGING_LEVEL;
-			propertyValue = propertyValue.toLowerCase();
-			switch (propertyValue) {
-			case "all"     : loggingMap.put(className, Level.ALL);     break;
-			case "finest"  : loggingMap.put(className, Level.FINEST);  break;
-			case "finer"   : loggingMap.put(className, Level.FINER);   break;
-			case "fine"    : loggingMap.put(className, Level.FINE);    break;
-			case "config"  : loggingMap.put(className, Level.CONFIG);  break;
-			case "info"    : loggingMap.put(className, Level.INFO);    break;
-			case "warning" : loggingMap.put(className, Level.WARNING); break;
-			case "severe"  : loggingMap.put(className, Level.SEVERE);  break;
-			default        : loggingMap.put(className, Level.OFF);     break;
-			}
-		}
-		return loggingMap.get(className);
 	}
 
 	public static String getProperty(String propertyName, String defaultPropertyValue) {

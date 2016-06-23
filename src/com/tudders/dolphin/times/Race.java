@@ -20,12 +20,11 @@ public class Race {
 	private StringBuilder fileData = new StringBuilder();
 	private List<Result> results;
 	private Pattern pattern = Pattern.compile("^(\\d{1,2});([0-9.]+);([^;]*);([^;]*)$");
-	private static final Logger logger = Logger.getLogger(Race.class.getName());
+	private static final Logger logger = Application.getLogger(Race.class.getName());
 
 	// TODO implement more logging 
 
 	public Race(File file) {
-		logger.setLevel(Application.getLoggingLevel(Race.class.getName()));
 		this.race = DolphinFile.getRaceFromFile(file);
 		this.event = DolphinFile.getEventFromFile(file);
 		this.heat = DolphinFile.getHeatFromFile(file);
