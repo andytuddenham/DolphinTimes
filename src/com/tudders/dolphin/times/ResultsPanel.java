@@ -69,7 +69,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	private JScrollPane textScrollPane;
 	private String raceNumber = null;
 	private List<ResultsPanelListener> resultsPanelListeners = new ArrayList<ResultsPanelListener>();
-	private static final Logger logger = Logger.getLogger(ResultsPanel.class.getName());
+	private static final Logger logger = Application.getLogger(ResultsPanel.class.getName());
 
 	// TODO implement logging 
 
@@ -78,7 +78,6 @@ public class ResultsPanel extends JPanel implements ActionListener {
 	}
 
 	public ResultsPanel(boolean detailMode) {
-		logger.setLevel(Application.getLoggingLevel(ResultsPanel.class.getName()));
 		super.setLayout(new BorderLayout());
 		this.detailMode = detailMode;
 		tableFontSize = Integer.valueOf(Application.getProperty("results.font.size", Application.getProperty("font.size", String.valueOf(0))));

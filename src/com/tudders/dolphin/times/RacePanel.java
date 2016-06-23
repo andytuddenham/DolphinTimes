@@ -24,12 +24,11 @@ public class RacePanel extends JPanel implements ActionListener {
 	private JComboBox<String> raceComboBox;
 	private JLabel eventLabel;
 	private JLabel heatLabel;
-	private static final Logger logger = Logger.getLogger(RacePanel.class.getName());
+	private static final Logger logger = Application.getLogger(RacePanel.class.getName());
 
 	// TODO implement more logging 
 
 	public RacePanel() {
-		logger.setLevel(Application.getLoggingLevel(RacePanel.class.getName()));
 		super.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setBorder(new EmptyBorder(2, 2, 2, 2));
 		JLabel raceLabel = new JLabel("Race:");

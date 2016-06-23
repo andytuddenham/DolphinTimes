@@ -17,10 +17,9 @@ public class ResultsWatcherThread extends Thread {
 	private String watchedDirectory;
 	private boolean run;
 	private List<ResultsListener> resultsListeners = new ArrayList<ResultsListener>();
-	private static final Logger logger = Logger.getLogger(ResultsWatcherThread.class.getName());
+	private static final Logger logger = Application.getLogger(ResultsWatcherThread.class.getName());
 
 	public ResultsWatcherThread(String watchedDirectory) {
-		logger.setLevel(Application.getLoggingLevel(ResultsWatcherThread.class.getName()));
 		run = true;
 		this.watchedDirectory = watchedDirectory;
 	}

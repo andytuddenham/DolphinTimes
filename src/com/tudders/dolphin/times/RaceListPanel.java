@@ -25,12 +25,11 @@ public class RaceListPanel extends JPanel {
 	private JPanel displayPanel;
 	private ResultsPanelListener resultsPanelListener;
 	private JScrollPane scrollPane;
-	private static final Logger logger = Logger.getLogger(RaceListPanel.class.getName());
+	private static final Logger logger = Application.getLogger(RaceListPanel.class.getName());
 
 	// TODO implement logging 
 
 	public RaceListPanel(ResultsPanelListener resultsPanelListener) {
-		logger.setLevel(Application.getLoggingLevel(RaceListPanel.class.getName()));
 		this.resultsPanelListener = resultsPanelListener;
 		super.setLayout(new BorderLayout());
 		try {

@@ -27,12 +27,11 @@ public class MeetPanel extends JPanel implements ActionListener {
 	private Map<String, Date> meetDates = null;
 	private JComboBox<String> meetComboBox;
 	private JLabel dateLabel;
-	private static final Logger logger = Logger.getLogger(MeetPanel.class.getName());
+	private static final Logger logger = Application.getLogger(MeetPanel.class.getName());
 
 	// TODO implement logging 
 
 	public MeetPanel() {
-		logger.setLevel(Application.getLoggingLevel(MeetPanel.class.getName()));
 		super.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setBorder(new EmptyBorder(2, 8, 2, 2));
 		JLabel meetLabel = new JLabel("Meet:");
