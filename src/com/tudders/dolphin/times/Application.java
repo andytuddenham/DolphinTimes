@@ -30,8 +30,10 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
@@ -237,10 +239,11 @@ public class Application implements ResultsListener {
 		frame.setIconImage(Toolkit.getDefaultToolkit().createImage(frame.getClass().getResource("/images/DolphinTimesLogo.png")));
 	}
 
-	private class ListFrame extends JFrame implements MeetListener, ResultsPanelListener {
+	public class ListFrame extends JFrame implements MeetListener, ResultsPanelListener {
 		private static final long serialVersionUID = 1L;
 		private MeetPanel meetPanel;
 		private RaceListPanel raceListPanel;
+		JButton bluetoothButton;
 		private final Logger logger = Application.getLogger(ListFrame.class.getName());
 
 		// TODO add logging
@@ -265,7 +268,7 @@ public class Application implements ResultsListener {
 			headerPanel.add(meetPanel);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(Box.createGlue());
-			JButton bluetoothButton = new JButton("BT");
+			bluetoothButton = new JButton("BT");
 			bluetoothButton.setBackground(Color.RED);
 			bluetoothButton.addActionListener(new ActionListener() {
 				@Override
@@ -275,13 +278,13 @@ public class Application implements ResultsListener {
 					if (source instanceof JButton && "BT".equals(event.getActionCommand())) {
 						if (serverThread == null) {
 							logger.info("Starting bluetooth server");
-							serverThread = new ServerThread();
+							serverThread = new ServerThread(getMe());
 							serverThread.setName("Dolphin Server Thread");
 							serverThread.start();
 						} else {
 							serverThread.shutdown();
 							logger.info("Waiting for "+serverThread.getName()+" to end");
-							try { serverThread.join(); } catch (InterruptedException e) {}
+							try { serverThread.join(1000); } catch (InterruptedException e) {}
 							serverThread = null;
 						}
 						bluetoothButton.setBackground(serverThread == null ? Color.RED : Color.GREEN);
@@ -317,6 +320,10 @@ public class Application implements ResultsListener {
 			getContentPane().setPreferredSize(new Dimension(773, 460));
 			pack();
 			setLocationRelativeTo(null);
+		}
+
+		private ListFrame getMe() {
+			return this;
 		}
 
 		@Override
@@ -356,6 +363,17 @@ public class Application implements ResultsListener {
 			if (meet.equals(meetPanel.getSelectedMeet())) {
 				raceListPanel.setRaceList(meetMap.get(meet));
 			}
+		}
+
+		public void serverError(Throwable throwable) {
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					serverThread = null;
+					bluetoothButton.setBackground(Color.RED);
+					JOptionPane.showMessageDialog(null, "Failed to start Bluetooth server function: "+throwable.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				}
+			});
 		}
 	}
 
