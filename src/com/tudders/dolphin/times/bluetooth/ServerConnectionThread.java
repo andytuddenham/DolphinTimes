@@ -1,8 +1,7 @@
 package com.tudders.dolphin.times.bluetooth;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.logging.Logger;
 
 import javax.microedition.io.StreamConnection;
@@ -19,15 +18,27 @@ public class ServerConnectionThread extends Thread {
 
 	@Override
 	public void run() {
+		//TODO clean up these threads on BT shutdown
 		logger.info(Thread.currentThread().getName()+" running");
 		try {
+//			BufferedReader br = new BufferedReader(new InputStreamReader(connection.openInputStream()));
+			OutputStream outStream = connection.openOutputStream();
+			int raceNo = 0;
 			while(true){
-				BufferedReader br = new BufferedReader(new InputStreamReader(connection.openInputStream()));
-				String cmd = br.readLine();
-				logger.info("Received " + cmd);
-				if (cmd == null || "quit".equals(cmd)) break;
+//				String cmd = br.readLine();
+//				if (cmd == null || "quit".equals(cmd)) break;
+//
+//				logger.info("Received " + cmd);
+				
+				outStream.flush();
+				outStream.write((raceNo++ +"\n").getBytes());
+				
+				Thread.sleep(1000);
 			}
 		} catch (IOException e) {
+			// TODO if app closed without closing socket ????
+			e.printStackTrace();
+		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
