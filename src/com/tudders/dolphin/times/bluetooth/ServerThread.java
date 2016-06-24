@@ -25,13 +25,16 @@ public class ServerThread extends Thread {
 	private LocalDevice local = null;
 	private StreamConnectionNotifier server = null;
 	private StreamConnection conn = null;
+	private Application.ListFrame listFrame;
 	private static final Logger logger = Application.getLogger(ServerThread.class.getName());
 
-	public ServerThread() {
+	public ServerThread(Application.ListFrame listFrame) {
+		this.listFrame = listFrame;
 	}
 
 	@Override
 	public void run() {
+		Throwable error = null;
 		try {
 			logger.info("Setting device to be discoverable");
 			local = LocalDevice.getLocalDevice();
@@ -58,12 +61,10 @@ public class ServerThread extends Thread {
 				}
 			}
 		} catch (BluetoothStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			error = e;
 			logger.log(Level.SEVERE, "Caught exception", e);
 		} catch (IOException ioe) {
-			// TODO Auto-generated catch block
-			ioe.printStackTrace();
+			error = ioe;
 			logger.log(Level.SEVERE, "Caught exception", ioe);
 		} finally {
 			if (server != null) {
@@ -72,6 +73,9 @@ public class ServerThread extends Thread {
 //			if (local != null) {
 //				local.
 //			}
+		}
+		if (error != null) {
+			listFrame.serverError(error);
 		}
 		logger.info(Thread.currentThread().getName()+" ended");
 	}
