@@ -453,12 +453,20 @@ public class Application implements ResultsListener {
 			try {
 				properties.load(new FileReader(propertiesFileName));
 			} catch (FileNotFoundException fnfe) {
-				logger.log(Level.WARNING, "properties file not found, using default values", fnfe);
+				if (logger != null) { 
+					logger.log(Level.WARNING, "properties file not found, using default values", fnfe);
+				} else {
+					System.err.println("properties file not found, using default values");
+				}
 			} catch (IOException ioe) {
 				error = ioe;
 			} finally {
 				if (error != null) {
-					logger.log(Level.SEVERE, "Error", error);
+					if (logger != null) { 
+						logger.log(Level.SEVERE, "Error", error);
+					} else {
+						error.printStackTrace();
+					}
 					System.exit(0);
 				}
 			}
