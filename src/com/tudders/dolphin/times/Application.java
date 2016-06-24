@@ -1,6 +1,7 @@
 package com.tudders.dolphin.times;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -35,6 +36,8 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 
+import com.tudders.dolphin.times.bluetooth.ServerThread;
+
 public class Application implements ResultsListener {
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
 	private static final String DEFAULT_LOGGING_LEVEL = "OFF";
@@ -50,6 +53,7 @@ public class Application implements ResultsListener {
 	private static final Map<String, Level> loggingMap = new HashMap<String, Level>();
 	private static final Logger logger;
 	private static FileHandler fileHandler;
+	private ServerThread serverThread = null;
 
 	static {
 		Calendar calendar = Calendar.getInstance();
@@ -128,13 +132,16 @@ public class Application implements ResultsListener {
 
 	private void appExit() {
 		logger.info("Application shutdown starting");
+		if (serverThread != null) {
+			serverThread.shutdown();
+			logger.info("Waiting for "+serverThread.getName()+" to end");
+			try { serverThread.join(); } catch (InterruptedException e) {}
+		}
 		if (resultsWatcherThread != null) {
 			resultsWatcherThread.removeResultsListener(this);
 			resultsWatcherThread.shutdown();
-			try {
-				logger.fine("Waiting for "+resultsWatcherThread.getName()+" to end");
-				resultsWatcherThread.join();
-			} catch (InterruptedException e) {}
+			logger.fine("Waiting for "+resultsWatcherThread.getName()+" to end");
+			try { resultsWatcherThread.join(); } catch (InterruptedException e) {}
 		}
 		logger.fine("Closing frames");
 		for (RaceFrame raceFrame: raceFrameList) {
@@ -258,10 +265,35 @@ public class Application implements ResultsListener {
 			headerPanel.add(meetPanel);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(Box.createGlue());
+			JButton bluetoothButton = new JButton("BT");
+			bluetoothButton.setBackground(Color.RED);
+			bluetoothButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent event) {
+					// TODO Auto-generated method stub
+					Object source = event.getSource();
+					if (source instanceof JButton && "BT".equals(event.getActionCommand())) {
+						if (serverThread == null) {
+							logger.info("Starting bluetooth server");
+							serverThread = new ServerThread();
+							serverThread.setName("Dolphin Server Thread");
+							serverThread.start();
+						} else {
+							serverThread.shutdown();
+							logger.info("Waiting for "+serverThread.getName()+" to end");
+							try { serverThread.join(); } catch (InterruptedException e) {}
+							serverThread = null;
+						}
+						bluetoothButton.setBackground(serverThread == null ? Color.RED : Color.GREEN);
+					}
+				}
+			});
+			headerPanel.add(bluetoothButton);
+			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			JButton helpButton = new JButton("Help...");
 			helpButton.addActionListener(new ActionListener() {
 				@Override
-				public void actionPerformed(ActionEvent arg0) {
+				public void actionPerformed(ActionEvent event) {
 					if (helpFrame == null) {
 						helpFrame = new HelpFrame(listFrame);
 						helpFrame.addWindowListener(new WindowAdapter() {
