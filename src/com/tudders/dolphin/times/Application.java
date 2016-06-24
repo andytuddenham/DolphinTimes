@@ -38,6 +38,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 
+import com.tudders.dolphin.times.bluetooth.BluetoothIndicator;
 import com.tudders.dolphin.times.bluetooth.ServerThread;
 
 public class Application implements ResultsListener {
@@ -243,7 +244,8 @@ public class Application implements ResultsListener {
 		private static final long serialVersionUID = 1L;
 		private MeetPanel meetPanel;
 		private RaceListPanel raceListPanel;
-		JButton bluetoothButton;
+		private JButton bluetoothButton;
+		private BluetoothIndicator btIndicator = new BluetoothIndicator();
 		private final Logger logger = Application.getLogger(ListFrame.class.getName());
 
 		// TODO add logging
@@ -270,6 +272,7 @@ public class Application implements ResultsListener {
 			headerPanel.add(Box.createGlue());
 			bluetoothButton = new JButton("BT");
 			bluetoothButton.setBackground(Color.RED);
+			btIndicator.setOnState(false);
 			bluetoothButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent event) {
@@ -288,11 +291,19 @@ public class Application implements ResultsListener {
 							serverThread = null;
 						}
 						bluetoothButton.setBackground(serverThread == null ? Color.RED : Color.GREEN);
+						
+						btIndicator.setOnState(serverThread != null);
+						btIndicator.repaint();
 					}
 				}
 			});
+
+
+			headerPanel.add(btIndicator);
+			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(bluetoothButton);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
+			
 			JButton helpButton = new JButton("Help...");
 			helpButton.addActionListener(new ActionListener() {
 				@Override
