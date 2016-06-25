@@ -82,7 +82,7 @@ public class Application implements ResultsListener {
 		listFrame = new ListFrame();
 	}
 
-	private String addResultsFile(File file) {
+	private String addResultsFile(File file, boolean sendToClients) {
 		logger.finer("file: "+file.getAbsolutePath());
 		String meet = DolphinFile.getMeetFromFile(file);
 		if (meet != null) {
@@ -99,6 +99,9 @@ public class Application implements ResultsListener {
 			Race race = new Race(file);
 			if (race.isValid()) {
 				raceList.add(race);
+				if (sendToClients) {
+					serverThread.newRace(race);
+				}
 			}
 			logger.finest("race "+(race != null ? race.getRaceNumber() : "null")+" is"+(race.isValid() ? " " : " not ")+"valid "+(race.getRaceResults() == null ? "race==null" : "size="+race.getRaceResults().size()));
 		}
@@ -110,7 +113,7 @@ public class Application implements ResultsListener {
 		File fileWatchDir = new File(watchDir);
 		if (fileWatchDir.isDirectory()) {
 			for (File file : fileWatchDir.listFiles()) {
-				addResultsFile(file);
+				addResultsFile(file, false);
 			}
 		} else {
 			logger.warning("Watch directory "+watchDir+" is not a directory");
@@ -160,7 +163,7 @@ public class Application implements ResultsListener {
 		logger.info("Create: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
-			String meet = addResultsFile(file);
+			String meet = addResultsFile(file, true);
 			if (meet != null) {
 				logger.fine("Updating frames for meet "+meet+" race count="+meetMap.get(meet).size());
 				listFrame.newRaceInMeet(meet);
