@@ -277,19 +277,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		resultsTableModel.setRowCount(results.size());
 		for (int index = 0; index < results.size(); index++) {
 			Result result = results.get(index);
-			String time = result.getTime();
 			if (includePlaces) {
 				resultsTableModel.setValueAt(result.getPlace(), index, 0);
 			}
 			resultsTableModel.setValueAt(result.getLaneNumber(), index, laneColumn);
-			Double seconds = Double.valueOf(time);
-			Integer minutes;
-			if (seconds > 60) {
-				minutes = (int)(seconds/60);
-				seconds = seconds%60;
-				time = String.format("%d:%05.2f", minutes, seconds);
-			}
-			resultsTableModel.setValueAt(time, index, timeColumn);
+			resultsTableModel.setValueAt(result.getFormattedTime(), index, timeColumn);
 		}
 	}
 
