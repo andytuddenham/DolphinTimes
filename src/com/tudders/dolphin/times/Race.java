@@ -55,6 +55,21 @@ public class Race {
 			}
 			if (!results.isEmpty()) {
 				Collections.sort(results, new ResultComparator());
+				Result previousResult = null;
+				Integer nextPlace = 1;
+				for (Result result : results) {
+					if (previousResult == null) {
+						result.place = nextPlace;
+					} else {
+						if (result.getTime().equals(previousResult.getTime())) {
+							result.place = previousResult.getPlace();
+						} else {
+							result.place = nextPlace;
+						}
+					}
+					nextPlace++;
+					previousResult = result;
+				}
 			}
 		} catch (FileNotFoundException fnfe) {
 			if (results!= null){
@@ -98,6 +113,7 @@ public class Race {
 	public class Result {
 		private Integer laneNumber;
 		private String time;
+		private Integer place = 0;
 		Result(Integer laneNumber, String time) {
 			this.laneNumber = laneNumber;
 			this.time = time;
@@ -107,6 +123,9 @@ public class Race {
 		}
 		public String getTime() {
 			return time;
+		}
+		public Integer getPlace() {
+			return place;
 		}
 	}
 

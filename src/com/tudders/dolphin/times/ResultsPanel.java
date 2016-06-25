@@ -275,19 +275,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		List<Result> results = race.getRaceResults();
 		ResultsTableModel resultsTableModel = (ResultsTableModel)resultsTable.getModel();
 		resultsTableModel.setRowCount(results.size());
-		int previousIndex = -1;
-		String previousTime = null;
-		boolean tiedTime = false;
 		for (int index = 0; index < results.size(); index++) {
 			Result result = results.get(index);
 			String time = result.getTime();
 			if (includePlaces) {
-				if (previousTime != null && previousTime.equals(time)) {
-					tiedTime = true;
-				} else {
-					tiedTime = false;
-				}
-				resultsTableModel.setValueAt(tiedTime ? previousIndex+1 : index+1, index, 0);
+				resultsTableModel.setValueAt(result.getPlace(), index, 0);
 			}
 			resultsTableModel.setValueAt(result.getLaneNumber(), index, laneColumn);
 			Double seconds = Double.valueOf(time);
@@ -298,8 +290,6 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				time = String.format("%d:%05.2f", minutes, seconds);
 			}
 			resultsTableModel.setValueAt(time, index, timeColumn);
-			if (!tiedTime) previousIndex = index;
-			previousTime = time;
 		}
 	}
 
