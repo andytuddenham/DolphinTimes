@@ -1,6 +1,7 @@
 package com.tudders.dolphin.times.bluetooth;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
@@ -13,15 +14,16 @@ public class BluetoothIndicator extends JPanel {
 	private boolean isOn = false;
 	
 	public BluetoothIndicator() {
-		setBackground(Color.CYAN);
+		setMaximumSize(new Dimension(getPreferredSize().width, getMaximumSize().height));
 	}
 
 	@Override
 	protected void paintComponent(Graphics g) {
+		int circleSize = 10;
 		super.paintComponent(g);
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setColor(isOn ? onColour : offColor);
-		g2d.fillOval(0, 0, 10, 10);
+		g2d.fillOval((getWidth()-circleSize)/2, (getHeight()-circleSize)/2, circleSize, circleSize);
 	}
 
 	public void setOnState(boolean isOn) {
