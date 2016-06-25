@@ -2,6 +2,8 @@ package com.tudders.dolphin.times.bluetooth;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,6 +17,7 @@ import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
 
 import com.tudders.dolphin.times.Application;
+import com.tudders.dolphin.times.Race;
 
 public class ServerThread extends Thread {
 	public final UUID uuid = new UUID("af1347316e1445a697a08582a078f731", false);
@@ -26,6 +29,7 @@ public class ServerThread extends Thread {
 	private StreamConnectionNotifier server = null;
 	private StreamConnection conn = null;
 	private Application.ListFrame listFrame;
+	private List<ServerConnectionThread> connections = new ArrayList<ServerConnectionThread>();
 	private static final Logger logger = Application.getLogger(ServerThread.class.getName());
 
 	public ServerThread(Application.ListFrame listFrame) {
@@ -49,7 +53,8 @@ public class ServerThread extends Thread {
 					logger.info("Waiting for incoming connection...");
 					conn = server.acceptAndOpen();
 					logger.info("Client Connected...");
-					ServerConnectionThread connectionThread = new ServerConnectionThread(conn);
+					ServerConnectionThread connectionThread = new ServerConnectionThread(this, conn);
+					connections.add(connectionThread);
 					connectionThread.setName("Dolphin Server Thread #"+serverNumber++);
 					connectionThread.start();
 				} catch (InterruptedIOException iioe) {
@@ -78,6 +83,16 @@ public class ServerThread extends Thread {
 			listFrame.serverError(error);
 		}
 		logger.info(Thread.currentThread().getName()+" ended");
+	}
+
+	public void connectionEnded(ServerConnectionThread conn) {
+		connections.remove(conn);
+	}
+
+	public void newRace(Race newRace) {
+		for (ServerConnectionThread connection : connections) {
+			connection.newRace(newRace);
+		}
 	}
 
 	public void shutdown() {
