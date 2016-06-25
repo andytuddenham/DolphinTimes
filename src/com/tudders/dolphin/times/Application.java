@@ -382,6 +382,8 @@ public class Application implements ResultsListener {
 				public void run() {
 					serverThread = null;
 					bluetoothButton.setBackground(Color.RED);
+					btIndicator.setOnState(false);
+					btIndicator.repaint();
 					JOptionPane.showMessageDialog(null, "Failed to start Bluetooth server function: "+throwable.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			});
