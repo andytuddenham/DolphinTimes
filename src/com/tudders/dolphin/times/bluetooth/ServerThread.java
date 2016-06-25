@@ -97,6 +97,9 @@ public class ServerThread extends Thread {
 
 	public void shutdown() {
 		logger.info("Shutdown called by "+Thread.currentThread().getName());
+		for (ServerConnectionThread connection : connections) {
+			connection.shutdown();
+		}
 		runServer = false;
 		try { server.close(); server = null; } catch (IOException e) {}
 		interrupt();
