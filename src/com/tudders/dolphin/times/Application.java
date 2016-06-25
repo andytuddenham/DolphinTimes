@@ -100,7 +100,7 @@ public class Application implements ResultsListener {
 			if (race.isValid()) {
 				raceList.add(race);
 				if (sendToClients) {
-					serverThread.newRace(race);
+					if (serverThread != null) serverThread.newRace(race);
 				}
 			}
 			logger.finest("race "+(race != null ? race.getRaceNumber() : "null")+" is"+(race.isValid() ? " " : " not ")+"valid "+(race.getRaceResults() == null ? "race==null" : "size="+race.getRaceResults().size()));
@@ -302,10 +302,10 @@ public class Application implements ResultsListener {
 			});
 
 
-			headerPanel.add(btIndicator);
-			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(bluetoothButton);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
+			headerPanel.add(btIndicator);
+			headerPanel.add(Box.createRigidArea(new Dimension(13, 0)));
 			
 			JButton helpButton = new JButton("Help...");
 			helpButton.addActionListener(new ActionListener() {
