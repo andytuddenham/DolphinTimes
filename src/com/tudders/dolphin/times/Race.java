@@ -47,7 +47,7 @@ public class Race {
 					} else {
 						Result result = new Result(lane, time);
 						results.add(result);
-						logger.finest("Added result [lane "+result.getLaneNumber()+" : "+result.getTime()+"]");
+						logger.finest("Added result [lane "+result.getLaneNumber()+" : "+result.getFormattedTime()+"]");
 					}
 				} else {
 					logger.finest("line not matched");
@@ -61,7 +61,7 @@ public class Race {
 					if (previousResult == null) {
 						result.place = nextPlace;
 					} else {
-						if (result.getTime().equals(previousResult.getTime())) {
+						if (result.getFormattedTime().equals(previousResult.getFormattedTime())) {
 							result.place = previousResult.getPlace();
 						} else {
 							result.place = nextPlace;
@@ -113,16 +113,28 @@ public class Race {
 	public class Result {
 		private Integer laneNumber;
 		private String time;
+		private String formattedTime;
 		private Integer place = 0;
+
 		Result(Integer laneNumber, String time) {
 			this.laneNumber = laneNumber;
 			this.time = time;
+			Double seconds = Double.valueOf(time);
+			Integer minutes;
+			if (seconds > 60) {
+				minutes = (int)(seconds/60);
+				seconds = seconds%60;
+				formattedTime = String.format("%d:%05.2f", minutes, seconds);
+			}
 		}
 		public Integer getLaneNumber() {
 			return laneNumber;
 		}
-		public String getTime() {
+		public String getTime () {
 			return time;
+		}
+		public String getFormattedTime() {
+			return formattedTime != null ? formattedTime : getTime();
 		}
 		public Integer getPlace() {
 			return place;
