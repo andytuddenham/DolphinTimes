@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.logging.SimpleFormatter;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -273,15 +275,24 @@ public class Application implements ResultsListener {
 			headerPanel.add(meetPanel);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(Box.createGlue());
-			bluetoothButton = new JButton("BT");
+			bluetoothButton = new JButton();
 			bluetoothButton.setBackground(Color.RED);
+			String bluetoothIconFile = "/images/bluetooth_16.png";
+			URL bluetoothIconURL = Application.class.getResource(bluetoothIconFile);
+			if (bluetoothIconURL != null) {
+				bluetoothButton.setIcon(new ImageIcon(bluetoothIconURL, "Bluetooth"));
+				bluetoothButton.setMinimumSize(new Dimension(25, bluetoothButton.getMinimumSize().height));
+				bluetoothButton.setPreferredSize(new Dimension(25, bluetoothButton.getPreferredSize().height));
+			} else {
+				bluetoothButton.setText("BT");
+			}
 			btIndicator.setOnState(false);
 			bluetoothButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent event) {
 					// TODO Auto-generated method stub
 					Object source = event.getSource();
-					if (source instanceof JButton && "BT".equals(event.getActionCommand())) {
+					if (source == bluetoothButton) {
 						if (serverThread == null) {
 							logger.info("Starting bluetooth server");
 							serverThread = new ServerThread(getMe());
@@ -387,6 +398,7 @@ public class Application implements ResultsListener {
 					bluetoothButton.setBackground(Color.RED);
 					btIndicator.setOnState(false);
 					btIndicator.repaint();
+					// FIXME JOptionPane.ERROR_MESSAGE icon is clipped in the following message dialog
 					JOptionPane.showMessageDialog(null, "Failed to start Bluetooth server function: "+throwable.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			});
