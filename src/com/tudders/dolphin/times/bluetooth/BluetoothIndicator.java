@@ -28,6 +28,7 @@ public class BluetoothIndicator extends JPanel {
 
 	public void setOnState(boolean isOn) {
 		this.isOn = isOn;
+		repaint();
 	}
 
 }

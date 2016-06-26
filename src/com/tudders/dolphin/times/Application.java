@@ -305,13 +305,10 @@ public class Application implements ResultsListener {
 							serverThread = null;
 						}
 						bluetoothButton.setBackground(serverThread == null ? Color.RED : Color.GREEN);
-						
 						btIndicator.setOnState(serverThread != null);
-						btIndicator.repaint();
 					}
 				}
 			});
-
 
 			headerPanel.add(bluetoothButton);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
@@ -401,7 +398,6 @@ public class Application implements ResultsListener {
 					serverThread = null;
 					bluetoothButton.setBackground(Color.RED);
 					btIndicator.setOnState(false);
-					btIndicator.repaint();
 					// FIXME JOptionPane.ERROR_MESSAGE icon is clipped in the following message dialog
 					JOptionPane.showMessageDialog(null, "Failed to start Bluetooth server function: "+throwable.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
