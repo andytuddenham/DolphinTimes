@@ -20,7 +20,8 @@ import com.tudders.dolphin.times.Application;
 import com.tudders.dolphin.times.Race;
 
 public class ServerThread extends Thread {
-	public final UUID uuid = new UUID("af1347316e1445a697a08582a078f731", false);
+//	public final UUID uuid = new UUID("af1347316e1445a697a08582a078f731", false);
+	public final UUID uuid = new UUID("1101", true);
 	public final String name = "DolphinTimes BT Server";
 	public final String url  =  "btspp://localhost:"+uuid+";name="+name+";authenticate=false;encrypt=false;";
 	private int serverNumber = 1;
@@ -42,6 +43,7 @@ public class ServerThread extends Thread {
 		try {
 			logger.info("Setting device to be discoverable");
 			local = LocalDevice.getLocalDevice();
+			logger.info("LocalDevice: Address="+local.getBluetoothAddress()+", Name="+local.getFriendlyName());
 			if (local.getDiscoverable() != DiscoveryAgent.GIAC) {
 				boolean discoverable = local.setDiscoverable(DiscoveryAgent.GIAC);
 				logger.info("discoverable = "+discoverable);

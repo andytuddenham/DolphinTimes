@@ -7,6 +7,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import javax.bluetooth.RemoteDevice;
 import javax.microedition.io.StreamConnection;
 
 import com.tudders.dolphin.times.Application;
@@ -30,6 +31,13 @@ public class ServerConnectionThread extends Thread {
 	public void run() {
 		//TODO clean up these threads on BT shutdown
 		logger.info(Thread.currentThread().getName()+" running");
+		try {
+			RemoteDevice remoteDev = RemoteDevice.getRemoteDevice(connection);
+			logger.info("Connected to RemoteDevice: Address="+remoteDev.getBluetoothAddress()+", Name="+remoteDev.getFriendlyName(true));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		try {
 //			BufferedReader br = new BufferedReader(new InputStreamReader(connection.openInputStream()));
 			OutputStream outStream = connection.openOutputStream();
