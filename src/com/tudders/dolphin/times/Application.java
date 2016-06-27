@@ -40,8 +40,8 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 
-import com.tudders.dolphin.times.bluetooth.BluetoothIndicator;
-import com.tudders.dolphin.times.bluetooth.ServerThread;
+import com.tudders.dolphin.times.client.BluetoothIndicator;
+import com.tudders.dolphin.times.server.ServerThread;
 
 public class Application implements ResultsListener {
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
