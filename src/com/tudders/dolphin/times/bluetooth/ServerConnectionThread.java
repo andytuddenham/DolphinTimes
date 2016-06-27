@@ -59,6 +59,7 @@ public class ServerConnectionThread extends Thread {
 						outStream.write(("Result"+fieldSeperator+Integer.toString(result.getPlace())+fieldSeperator+Integer.toString(result.getLaneNumber())+fieldSeperator+result.getFormattedTime()+"\n").getBytes());
 					}
 					outStream.flush();
+					logger.info("sent race "+race.getRaceNumber());
 //					outStream.write((raceNo++ +"\n").getBytes());
 
 //					Thread.sleep(1000);
