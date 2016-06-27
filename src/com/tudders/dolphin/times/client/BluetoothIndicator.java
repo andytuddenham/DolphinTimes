@@ -1,4 +1,4 @@
-package com.tudders.dolphin.times.bluetooth;
+package com.tudders.dolphin.times.client;
 
 import java.awt.Color;
 import java.awt.Dimension;
