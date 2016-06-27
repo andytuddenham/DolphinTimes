@@ -18,9 +18,9 @@ import javax.microedition.io.StreamConnectionNotifier;
 
 import com.tudders.dolphin.times.Application;
 import com.tudders.dolphin.times.Race;
-import com.tudders.dolphin.times.client.BluetoothConnectionThread;
+import com.tudders.dolphin.times.client.BluetoothClientThread;
 
-public class ServerThread extends Thread {
+public class BluetoothServerThread extends Thread {
 	public final UUID uuid = new UUID("af1347316e1445a697a08582a078f731", false);
 	public final String name = "DolphinTimes BT Server";
 	public final String url  =  "btspp://localhost:"+uuid+";name="+name+";authenticate=false;encrypt=false;";
@@ -30,10 +30,10 @@ public class ServerThread extends Thread {
 	private StreamConnectionNotifier server = null;
 	private StreamConnection conn = null;
 	private Application.ListFrame listFrame;
-	private List<BluetoothConnectionThread> connections = new ArrayList<BluetoothConnectionThread>();
-	private static final Logger logger = Application.getLogger(ServerThread.class.getName());
+	private List<BluetoothClientThread> connections = new ArrayList<BluetoothClientThread>();
+	private static final Logger logger = Application.getLogger(BluetoothServerThread.class.getName());
 
-	public ServerThread(Application.ListFrame listFrame) {
+	public BluetoothServerThread(Application.ListFrame listFrame) {
 		this.listFrame = listFrame;
 	}
 
@@ -55,7 +55,7 @@ public class ServerThread extends Thread {
 					logger.info("Waiting for incoming connection...");
 					conn = server.acceptAndOpen();
 					logger.info("Client Connected...");
-					BluetoothConnectionThread connectionThread = new BluetoothConnectionThread(this, conn);
+					BluetoothClientThread connectionThread = new BluetoothClientThread(this, conn);
 					connections.add(connectionThread);
 					connectionThread.setName("Dolphin Server Thread #"+serverNumber++);
 					connectionThread.start();
@@ -87,19 +87,19 @@ public class ServerThread extends Thread {
 		logger.info(Thread.currentThread().getName()+" ended");
 	}
 
-	public void connectionEnded(BluetoothConnectionThread conn) {
+	public void connectionEnded(BluetoothClientThread conn) {
 		connections.remove(conn);
 	}
 
 	public void newRace(Race newRace) {
-		for (BluetoothConnectionThread connection : connections) {
+		for (BluetoothClientThread connection : connections) {
 			connection.newRace(newRace);
 		}
 	}
 
 	public void shutdown() {
 		logger.info("Shutdown called by "+Thread.currentThread().getName());
-		for (BluetoothConnectionThread connection : connections) {
+		for (BluetoothClientThread connection : connections) {
 			connection.shutdown();
 		}
 		runServer = false;
