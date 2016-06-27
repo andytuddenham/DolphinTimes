@@ -20,7 +20,7 @@ public class ServerConnectionThread extends Thread {
 	private SynchronousQueue<Race> queue = new SynchronousQueue<Race>();
 	private ServerThread server;
 	private boolean run = true;
-	private char fieldSeperator = '|';
+	private char fieldSeperator = '/';
 
 	public ServerConnectionThread(ServerThread serverThread, StreamConnection conn) {
 		server = serverThread;
@@ -29,7 +29,6 @@ public class ServerConnectionThread extends Thread {
 
 	@Override
 	public void run() {
-		//TODO clean up these threads on BT shutdown
 		logger.info(Thread.currentThread().getName()+" running");
 		try {
 			RemoteDevice remoteDev = RemoteDevice.getRemoteDevice(connection);
@@ -39,19 +38,12 @@ public class ServerConnectionThread extends Thread {
 			e.printStackTrace();
 		}
 		try {
-//			BufferedReader br = new BufferedReader(new InputStreamReader(connection.openInputStream()));
 			OutputStream outStream = connection.openOutputStream();
-//			int raceNo = 0;
 			while(run){
-//				String cmd = br.readLine();
-//				if (cmd == null || "quit".equals(cmd)) break;
-//
-//				logger.info("Received " + cmd);
 				Race race = queue.poll(100, TimeUnit.MILLISECONDS);
 				outStream.flush();
 				if (race != null) {
 					logger.info("sending race "+race.getRaceNumber());
-
 					outStream.write(("Race"+fieldSeperator+race.getRaceNumber()+"\n").getBytes());
 					List<Result> raceList = race.getRaceResults();
 					outStream.write(("Count"+fieldSeperator+Integer.toString(raceList.size())+"\n").getBytes());
@@ -60,9 +52,6 @@ public class ServerConnectionThread extends Thread {
 					}
 					outStream.flush();
 					logger.info("sent race "+race.getRaceNumber());
-//					outStream.write((raceNo++ +"\n").getBytes());
-
-//					Thread.sleep(1000);
 				}
 			}
 		} catch (IOException e) {
