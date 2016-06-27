@@ -13,18 +13,18 @@ import javax.microedition.io.StreamConnection;
 import com.tudders.dolphin.times.Application;
 import com.tudders.dolphin.times.Race;
 import com.tudders.dolphin.times.Race.Result;
-import com.tudders.dolphin.times.server.ServerThread;
+import com.tudders.dolphin.times.server.BluetoothServerThread;
 
-public class BluetoothConnectionThread extends Thread {
+public class BluetoothClientThread extends Thread {
 	private StreamConnection connection;
-	private static final Logger logger = Application.getLogger(BluetoothConnectionThread.class.getName());
+	private static final Logger logger = Application.getLogger(BluetoothClientThread.class.getName());
 	private SynchronousQueue<Race> queue = new SynchronousQueue<Race>();
-	private ServerThread server;
+	private BluetoothServerThread server;
 	private boolean run = true;
 	private char fieldSeperator = '/';
 
-	public BluetoothConnectionThread(ServerThread serverThread, StreamConnection conn) {
-		server = serverThread;
+	public BluetoothClientThread(BluetoothServerThread bluetoothServerThread, StreamConnection conn) {
+		server = bluetoothServerThread;
 		connection = conn;
 	}
 

@@ -41,7 +41,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 
 import com.tudders.dolphin.times.client.BluetoothIndicator;
-import com.tudders.dolphin.times.server.ServerThread;
+import com.tudders.dolphin.times.server.BluetoothServerThread;
 
 public class Application implements ResultsListener {
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
@@ -58,7 +58,7 @@ public class Application implements ResultsListener {
 	private static final Map<String, Level> loggingMap = new HashMap<String, Level>();
 	private static final Logger logger;
 	private static FileHandler fileHandler;
-	private ServerThread serverThread = null;
+	private BluetoothServerThread bluetoothServerThread = null;
 
 	static {
 		Calendar calendar = Calendar.getInstance();
@@ -102,7 +102,7 @@ public class Application implements ResultsListener {
 			if (race.isValid()) {
 				raceList.add(race);
 				if (sendToClients) {
-					if (serverThread != null) serverThread.newRace(race);
+					if (bluetoothServerThread != null) bluetoothServerThread.newRace(race);
 				}
 			}
 			logger.finest("race "+(race != null ? race.getRaceNumber() : "null")+" is"+(race.isValid() ? " " : " not ")+"valid "+(race.getRaceResults() == null ? "race==null" : "size="+race.getRaceResults().size()));
@@ -140,10 +140,10 @@ public class Application implements ResultsListener {
 
 	private void appExit() {
 		logger.info("Application shutdown starting");
-		if (serverThread != null) {
-			serverThread.shutdown();
-			logger.info("Waiting for "+serverThread.getName()+" to end");
-			try { serverThread.join(); } catch (InterruptedException e) {}
+		if (bluetoothServerThread != null) {
+			bluetoothServerThread.shutdown();
+			logger.info("Waiting for "+bluetoothServerThread.getName()+" to end");
+			try { bluetoothServerThread.join(); } catch (InterruptedException e) {}
 		}
 		if (resultsWatcherThread != null) {
 			resultsWatcherThread.removeResultsListener(this);
@@ -293,19 +293,19 @@ public class Application implements ResultsListener {
 					// TODO Auto-generated method stub
 					Object source = event.getSource();
 					if (source == bluetoothButton) {
-						if (serverThread == null) {
+						if (bluetoothServerThread == null) {
 							logger.info("Starting bluetooth server");
-							serverThread = new ServerThread(getMe());
-							serverThread.setName("Dolphin Server Thread");
-							serverThread.start();
+							bluetoothServerThread = new BluetoothServerThread(getMe());
+							bluetoothServerThread.setName("Dolphin Server Thread");
+							bluetoothServerThread.start();
 						} else {
-							serverThread.shutdown();
-							logger.info("Waiting for "+serverThread.getName()+" to end");
-							try { serverThread.join(1000); } catch (InterruptedException e) {}
-							serverThread = null;
+							bluetoothServerThread.shutdown();
+							logger.info("Waiting for "+bluetoothServerThread.getName()+" to end");
+							try { bluetoothServerThread.join(1000); } catch (InterruptedException e) {}
+							bluetoothServerThread = null;
 						}
-						bluetoothButton.setBackground(serverThread == null ? Color.RED : Color.GREEN);
-						btIndicator.setOnState(serverThread != null);
+						bluetoothButton.setBackground(bluetoothServerThread == null ? Color.RED : Color.GREEN);
+						btIndicator.setOnState(bluetoothServerThread != null);
 					}
 				}
 			});
@@ -395,7 +395,7 @@ public class Application implements ResultsListener {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					serverThread = null;
+					bluetoothServerThread = null;
 					bluetoothButton.setBackground(Color.RED);
 					btIndicator.setOnState(false);
 					// FIXME JOptionPane.ERROR_MESSAGE icon is clipped in the following message dialog
