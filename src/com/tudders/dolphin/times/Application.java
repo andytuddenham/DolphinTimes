@@ -42,6 +42,7 @@ import javax.swing.border.EmptyBorder;
 
 import com.tudders.dolphin.times.client.BluetoothIndicator;
 import com.tudders.dolphin.times.server.BluetoothServerThread;
+import com.tudders.dolphin.times.server.IPServerThread;
 
 public class Application implements ResultsListener {
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
@@ -59,6 +60,7 @@ public class Application implements ResultsListener {
 	private static final Logger logger;
 	private static FileHandler fileHandler;
 	private BluetoothServerThread bluetoothServerThread = null;
+	private IPServerThread ipServerThread = null;
 
 	static {
 		Calendar calendar = Calendar.getInstance();
@@ -135,11 +137,20 @@ public class Application implements ResultsListener {
 		resultsWatcherThread.setName("Results Watcher");
 		resultsWatcherThread.addResultsListener(this);
 		resultsWatcherThread.start();
+		logger.info("Starting ip server");
+		ipServerThread = new IPServerThread(listFrame);
+		ipServerThread.setName("IP Server Thread");
+		ipServerThread.start();
 		logger.info("Application started");
 	}
 
 	private void appExit() {
 		logger.info("Application shutdown starting");
+		if (ipServerThread != null) {
+			ipServerThread.shutdown();
+			logger.info("Waiting for "+ipServerThread.getName()+" to end");
+			try { ipServerThread.join(); } catch (InterruptedException e) {}
+		}
 		if (bluetoothServerThread != null) {
 			bluetoothServerThread.shutdown();
 			logger.info("Waiting for "+bluetoothServerThread.getName()+" to end");
@@ -296,7 +307,7 @@ public class Application implements ResultsListener {
 						if (bluetoothServerThread == null) {
 							logger.info("Starting bluetooth server");
 							bluetoothServerThread = new BluetoothServerThread(getMe());
-							bluetoothServerThread.setName("Dolphin Server Thread");
+							bluetoothServerThread.setName("Bluetooth Server Thread");
 							bluetoothServerThread.start();
 						} else {
 							bluetoothServerThread.shutdown();

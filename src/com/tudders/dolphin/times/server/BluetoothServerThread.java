@@ -20,21 +20,17 @@ import com.tudders.dolphin.times.Application;
 import com.tudders.dolphin.times.Race;
 import com.tudders.dolphin.times.client.BluetoothClientThread;
 
-public class BluetoothServerThread extends Thread {
+public class BluetoothServerThread extends ServerThread {
 	public final UUID uuid = new UUID("af1347316e1445a697a08582a078f731", false);
 	public final String name = "DolphinTimes BT Server";
 	public final String url  =  "btspp://localhost:"+uuid+";name="+name+";authenticate=false;encrypt=false;";
-	private int serverNumber = 1;
-	private boolean runServer = true;
 	private LocalDevice local = null;
 	private StreamConnectionNotifier server = null;
 	private StreamConnection conn = null;
-	private Application.ListFrame listFrame;
-	private List<BluetoothClientThread> connections = new ArrayList<BluetoothClientThread>();
 	private static final Logger logger = Application.getLogger(BluetoothServerThread.class.getName());
 
 	public BluetoothServerThread(Application.ListFrame listFrame) {
-		this.listFrame = listFrame;
+		super(listFrame);
 	}
 
 	@Override
@@ -50,15 +46,15 @@ public class BluetoothServerThread extends Thread {
 			}
 			logger.info("Start advertising service...");
 			server = (StreamConnectionNotifier)Connector.open(url);
-			while (runServer) {
+			while (runServer()) {
 				try {
-					logger.info("Waiting for incoming connection...");
+					logger.info("Waiting for incoming Bluetooth connection");
 					conn = server.acceptAndOpen();
-					logger.info("Client Connected...");
-					BluetoothClientThread connectionThread = new BluetoothClientThread(this, conn);
-					connections.add(connectionThread);
-					connectionThread.setName("Dolphin Server Thread #"+serverNumber++);
-					connectionThread.start();
+					logger.info("Bluetooth Client Connected");
+					BluetoothClientThread clientThread = new BluetoothClientThread(this, conn);
+					clientThread.setName("Bluetooth Server Thread #"+serverNumber++);
+					addClient(clientThread);
+					clientThread.start();
 				} catch (InterruptedIOException iioe) {
 					// we get here when shutdown() calls server.close(),
 					// so just ignore the exception
@@ -77,33 +73,17 @@ public class BluetoothServerThread extends Thread {
 			if (server != null) {
 				try { server.close(); } catch (IOException e) {}
 			}
-//			if (local != null) {
-//				local.
-//			}
 		}
 		if (error != null) {
-			listFrame.serverError(error);
+			super.reportError(error);
 		}
 		logger.info(Thread.currentThread().getName()+" ended");
 	}
 
-	public void connectionEnded(BluetoothClientThread conn) {
-		connections.remove(conn);
-	}
-
-	public void newRace(Race newRace) {
-		for (BluetoothClientThread connection : connections) {
-			connection.newRace(newRace);
-		}
-	}
-
 	public void shutdown() {
-		logger.info("Shutdown called by "+Thread.currentThread().getName());
-		for (BluetoothClientThread connection : connections) {
-			connection.shutdown();
-		}
-		runServer = false;
-		try { server.close(); server = null; } catch (IOException e) {}
+		super.shutdown();
+		try { if (server != null) server.close(); } catch (IOException e) {}
+		server = null;
 		interrupt();
 	}
 }

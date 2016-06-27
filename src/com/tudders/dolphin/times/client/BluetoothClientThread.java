@@ -3,8 +3,6 @@ package com.tudders.dolphin.times.client;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.bluetooth.RemoteDevice;
@@ -13,18 +11,15 @@ import javax.microedition.io.StreamConnection;
 import com.tudders.dolphin.times.Application;
 import com.tudders.dolphin.times.Race;
 import com.tudders.dolphin.times.Race.Result;
-import com.tudders.dolphin.times.server.BluetoothServerThread;
+import com.tudders.dolphin.times.server.ServerThread;
 
-public class BluetoothClientThread extends Thread {
+public class BluetoothClientThread extends ClientThread {
 	private StreamConnection connection;
+	private ServerThread server;
 	private static final Logger logger = Application.getLogger(BluetoothClientThread.class.getName());
-	private SynchronousQueue<Race> queue = new SynchronousQueue<Race>();
-	private BluetoothServerThread server;
-	private boolean run = true;
-	private char fieldSeperator = '/';
 
-	public BluetoothClientThread(BluetoothServerThread bluetoothServerThread, StreamConnection conn) {
-		server = bluetoothServerThread;
+	public BluetoothClientThread(ServerThread serverThread, StreamConnection conn) {
+		server = serverThread;
 		connection = conn;
 	}
 
@@ -40,8 +35,8 @@ public class BluetoothClientThread extends Thread {
 		}
 		try {
 			OutputStream outStream = connection.openOutputStream();
-			while(run){
-				Race race = queue.poll(100, TimeUnit.MILLISECONDS);
+			while(runClient()){
+				Race race = getNextRace();
 				outStream.flush();
 				if (race != null) {
 					logger.info("sending race "+race.getRaceNumber());
@@ -58,23 +53,12 @@ public class BluetoothClientThread extends Thread {
 		} catch (IOException e) {
 			// TODO if app closed without closing socket ????
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} finally {
 			if (connection != null) {
 				try { connection.close(); } catch (IOException e) {}
 			}
 		}
-		if (run) server.connectionEnded(this);
+		if (runClient()) server.connectionEnded(this);
 		logger.info(Thread.currentThread().getName()+" ended");
-	}
-
-	public void newRace(Race newRace) {
-		queue.add(newRace);
-	}
-
-	public void shutdown() {
-		run = false;
 	}
 }
