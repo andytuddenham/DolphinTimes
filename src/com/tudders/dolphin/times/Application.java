@@ -43,6 +43,7 @@ import javax.swing.border.EmptyBorder;
 import com.tudders.dolphin.times.client.BluetoothIndicator;
 import com.tudders.dolphin.times.server.BluetoothServerThread;
 import com.tudders.dolphin.times.server.IPServerThread;
+import com.tudders.dolphin.times.server.ServerThread;
 
 public class Application implements ResultsListener {
 	private static final String DEFAULT_PROPERTIES_FILE = "dolphintimes.properties";
@@ -52,14 +53,13 @@ public class Application implements ResultsListener {
 	private ListFrame listFrame;
 	private String watchDir;
 	private ResultsWatcherThread resultsWatcherThread = null;
-	private final Map<String, List<Race>> meetMap = Collections.synchronizedMap(new HashMap<String, List<Race>>());
-	private final Map<String, Date> meetDates = Collections.synchronizedMap(new HashMap<String, Date>());
+	private final Map<String, Meet> meetMap = Collections.synchronizedMap(new HashMap<String, Meet>());
 	private final List<RaceFrame> raceFrameList = Collections.synchronizedList(new ArrayList<RaceFrame>());
 	private HelpFrame helpFrame = null;
 	private static final Map<String, Level> loggingMap = new HashMap<String, Level>();
 	private static final Logger logger;
 	private static FileHandler fileHandler;
-	private BluetoothServerThread bluetoothServerThread = null;
+	private ServerThread bluetoothServerThread = null;
 	private IPServerThread ipServerThread = null;
 
 	static {
@@ -83,36 +83,33 @@ public class Application implements ResultsListener {
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
 			logger.log(Level.WARNING, "Caught exception", e);
 		}
+		readFilesInWatchdir();
 		listFrame = new ListFrame();
 	}
 
 	private String addResultsFile(File file, boolean sendToClients) {
 		logger.finer("file: "+file.getAbsolutePath());
-		String meet = DolphinFile.getMeetFromFile(file);
-		if (meet != null) {
+		String meetName = DolphinFile.getMeetFromFile(file);
+		if (meetName != null) {
 			Date modifiedDate = new Date(file.lastModified());
-			List<Race> raceList = meetMap.get(meet);
-			if (raceList == null) {
-				raceList = new ArrayList<Race>();
-				meetMap.put(meet, raceList);
-			}
-			Date date = meetDates.get(meet);
-			if (date == null || modifiedDate.getTime() < date.getTime()) {
-				meetDates.put(meet, modifiedDate);
+			Meet meet = meetMap.get(meetName);
+			if (meet == null) {
+				meet = new Meet(meetName, modifiedDate);
+				meetMap.put(meetName, meet);
 			}
 			Race race = new Race(file);
 			if (race.isValid()) {
-				raceList.add(race);
+				meet.add(race);
 				if (sendToClients) {
-					if (bluetoothServerThread != null) bluetoothServerThread.newRace(race);
+					if (bluetoothServerThread != null) bluetoothServerThread.push(race);
 				}
 			}
 			logger.finest("race "+(race != null ? race.getRaceNumber() : "null")+" is"+(race.isValid() ? " " : " not ")+"valid "+(race.getRaceResults() == null ? "race==null" : "size="+race.getRaceResults().size()));
 		}
-		return meet;
+		return meetName;
 	}
 
-	private List<String> initMeetList() {
+	private void readFilesInWatchdir() {
 		logger.info("watchDir: "+watchDir);
 		File fileWatchDir = new File(watchDir);
 		if (fileWatchDir.isDirectory()) {
@@ -122,11 +119,6 @@ public class Application implements ResultsListener {
 		} else {
 			logger.warning("Watch directory "+watchDir+" is not a directory");
 		}
-		return getMeetList();
-	}
-
-	private List<String> getMeetList() {
-		return new ArrayList<String>(meetMap.keySet());
 	}
 
 	public void start() {
@@ -178,7 +170,7 @@ public class Application implements ResultsListener {
 			File file = new File(fileName);
 			String meet = addResultsFile(file, true);
 			if (meet != null) {
-				logger.fine("Updating frames for meet "+meet+" race count="+meetMap.get(meet).size());
+				logger.fine("Updating frames for meet "+meet+" race count="+meetMap.get(meet).getRaceCount());
 				listFrame.newRaceInMeet(meet);
 				for (RaceFrame raceFrame: raceFrameList) {
 					raceFrame.newRace(file);
@@ -192,24 +184,29 @@ public class Application implements ResultsListener {
 		logger.info("Delete: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
-			String meet = DolphinFile.getMeetFromFile(file);
-			if (meet != null) {
+			String meetName = DolphinFile.getMeetFromFile(file);
+			if (meetName != null) {
 				String raceNumber = DolphinFile.getRaceFromFile(file);
-				List<Race> raceList = meetMap.get(meet);
-				if (raceList != null) {
-					for (Race race : raceList) {
-						if (raceNumber.equals(race.getRaceNumber())) {
-							logger.finer("Updating frames for meet "+meet+" race "+raceNumber);
-							raceList.remove(race);
-							// TODO test if raceList is now empty
-							// if so, remove meet from meetList and meetDates and notify listFrame and raceFrameList that meet is gone
-							// TODO come to think of it, consider creating a meet object and encapsulating the race list and date in
-							// a new Meet class.
-							listFrame.refreshMeet(meet);
-							for (RaceFrame raceFrame: raceFrameList) {
-								raceFrame.removeRace(file);
+				Meet meet = meetMap.get(meetName);
+				if (meet != null) {
+					List<Race> raceList = meet.getRaceList();
+					if (raceList != null) {
+						for (Race race : raceList) {
+							if (raceNumber.equals(race.getRaceNumber())) {
+								logger.finer("Updating frames for meet "+meetName+" race "+raceNumber);
+								meet.remove(race);
+								// TODO test if raceList is now empty
+								// if so, remove meet from meetMap and notify listFrame and raceFrameList that meet is gone
+								if (meet.getRaceCount() == 0) {
+
+								} else {
+									listFrame.refreshMeet(meetName);
+									for (RaceFrame raceFrame: raceFrameList) {
+										raceFrame.removeRace(file);
+									}
+								}
+								break;
 							}
-							break;
 						}
 					}
 				}
@@ -222,32 +219,35 @@ public class Application implements ResultsListener {
 		logger.info("Modify: "+fileName);
 		if (fileName.endsWith("."+DolphinFile.FILE_EXTENSION)) {
 			File file = new File(fileName);
-			String meet = DolphinFile.getMeetFromFile(file);
-			if (meet != null) {
+			String meetName = DolphinFile.getMeetFromFile(file);
+			if (meetName != null) {
 				String raceNumber = DolphinFile.getRaceFromFile(file);
-				logger.fine("meet: "+meet+" race "+raceNumber);
-				List<Race> raceList = meetMap.get(meet);
-				if (raceList != null) {
-					Race raceToUpdate = null;
-					for (Race race: raceList) {
-						if (race.getRaceNumber().equals(raceNumber)) {
-							raceToUpdate = race;
-							break;
+				logger.fine("meet: "+meetName+" race "+raceNumber);
+				Meet meet = meetMap.get(meetName);
+				if (meet != null) {
+					List<Race> raceList = meet.getRaceList();
+					if (raceList != null) {
+						Race raceToUpdate = null;
+						for (Race race: raceList) {
+							if (race.getRaceNumber().equals(raceNumber)) {
+								raceToUpdate = race;
+								break;
+							}
+						}
+						if (raceToUpdate != null) {
+							meet.remove(raceToUpdate);
+						}
+						Race newRace = new Race(file);
+						if (newRace.isValid()) {
+							meet.add(newRace);
+						}
+						logger.fine("Updating frames for meet "+meetName+" race "+raceNumber);
+						listFrame.refreshMeet(meetName);
+						for (RaceFrame raceFrame: raceFrameList) {
+							raceFrame.updateRace(file);
 						}
 					}
-					if (raceToUpdate != null) {
-						raceList.remove(raceToUpdate);
-					}
-					Race newRace = new Race(file);
-					if (newRace.isValid()) {
-						raceList.add(newRace);
-					}
-					logger.fine("Updating frames for meet "+meet+" race "+raceNumber);
-					listFrame.refreshMeet(meet);
-					for (RaceFrame raceFrame: raceFrameList) {
-						raceFrame.updateRace(file);
-					}
-				}				
+				}
 			}
 		}
 	}
@@ -282,7 +282,7 @@ public class Application implements ResultsListener {
 			raceListPanel = new RaceListPanel(this);
 			meetPanel = new MeetPanel();
 			meetPanel.addMeetListener(this);
-			meetPanel.setMeetList(initMeetList(), meetDates);
+			meetPanel.setMeetMap(meetMap);
 			headerPanel.add(meetPanel);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(Box.createGlue());
@@ -371,7 +371,7 @@ public class Application implements ResultsListener {
 
 		@Override
 		public void selectMeetEvent(String meet) {
-			raceListPanel.setRaceList(meetMap.get(meet));
+			raceListPanel.setRaceList(meetMap.get(meet).getRaceList());
 		}
 
 		@Override
@@ -388,17 +388,17 @@ public class Application implements ResultsListener {
 			}
 			logger.finer("newMeet "+newMeet+", selectedMeet "+selectedMeet);
 			if (newMeet == selectedMeet) {
-				raceListPanel.setRaceList(meetMap.get(meet));
+				raceListPanel.setRaceList(meetMap.get(meet).getRaceList());
 			} else if (newMeet > selectedMeet) {
-				meetPanel.setMeetList(getMeetList(), meetDates);
-				raceListPanel.setRaceList(meetMap.get(meet));
+				meetPanel.setMeetMap(meetMap);
+				raceListPanel.setRaceList(meetMap.get(meet).getRaceList());
 			}
 		}
 
 		public void refreshMeet(String meet) {
 			logger.finer("meet "+meet);
 			if (meet.equals(meetPanel.getSelectedMeet())) {
-				raceListPanel.setRaceList(meetMap.get(meet));
+				raceListPanel.setRaceList(meetMap.get(meet).getRaceList());
 			}
 		}
 
@@ -444,7 +444,7 @@ public class Application implements ResultsListener {
 			racePanel.addRaceListener(this);
 			meetPanel = new MeetPanel();
 			meetPanel.addMeetListener(this);
-			meetPanel.setMeetList(getMeetList(), meetDates);
+			meetPanel.setMeetMap(meetMap);
 			contentPanel.add(meetPanel);
 			contentPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 			contentPanel.add(racePanel);
@@ -459,7 +459,7 @@ public class Application implements ResultsListener {
 			setLocationRelativeTo(null);
 		}
 
-		@Override public void selectMeetEvent(String meet) { racePanel.setRaceList(meetMap.get(meet)); }
+		@Override public void selectMeetEvent(String meet) { racePanel.setRaceList(meetMap.get(meet).getRaceList()); }
 		@Override public void clearMeetEvent()             { racePanel.clearRaceList(); }
 		@Override public void selectRaceEvent(Race race)   { resultsPanel.setRace(race); }
 		@Override public void clearRaceEvent()             { resultsPanel.clearRace(); }

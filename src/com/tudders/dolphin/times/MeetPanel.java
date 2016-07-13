@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -24,7 +24,7 @@ import javax.swing.border.EmptyBorder;
 public class MeetPanel extends JPanel implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	private List<MeetListener> meetListeners = new ArrayList<MeetListener>();
-	private Map<String, Date> meetDates = null;
+	private Map<String, Meet> meetMap = Collections.synchronizedMap(new HashMap<String, Meet>());
 	private JComboBox<String> meetComboBox;
 	private JLabel dateLabel;
 	private static final Logger logger = Application.getLogger(MeetPanel.class.getName());
@@ -64,7 +64,7 @@ public class MeetPanel extends JPanel implements ActionListener {
 					dateLabel.setText("");
 				} else {
 					meetListener.selectMeetEvent((String)((JComboBox<?>)event.getSource()).getSelectedItem());
-					dateLabel.setText(new SimpleDateFormat("dd/MM/yyyy").format(meetDates.get((String)((JComboBox<?>)event.getSource()).getSelectedItem())));
+					dateLabel.setText(new SimpleDateFormat("dd/MM/yyyy").format(meetMap.get((String)((JComboBox<?>)event.getSource()).getSelectedItem()).getDate()));
 				}
 			}
 		}
@@ -78,14 +78,11 @@ public class MeetPanel extends JPanel implements ActionListener {
 		return (String)meetComboBox.getSelectedItem();
 	}
 
-	public void setMeetList(List<String> meetList, Map<String, Date> meetDates) {
-		// TODO the meetList (which is derived from Application's meetMap.keySet()) should be identical
-		// to the keySet of meetDates, so maybe we only need meetDates.
-		// TODO also see the todo in Application.deleteFileEvent that mentions creating a new Meet class.
-		this.meetDates = meetDates;
-		Collections.sort(meetList, new MeetComparator());
-		meetComboBox.removeAllItems();
+	public void setMeetMap(Map<String, Meet> newMeetMap) {
+		meetMap = newMeetMap;
+		List<String> meetList = new ArrayList<String>(meetMap.keySet());
 		if (!meetList.isEmpty()) {
+			Collections.sort(meetList, new MeetComparator());
 			//using ComboBoxModel prevents event being fired
 			DefaultComboBoxModel<String> meetComboBoxModel = new DefaultComboBoxModel<String>(meetList.toArray(new String[0]));
 			meetComboBox.setModel(meetComboBoxModel);
