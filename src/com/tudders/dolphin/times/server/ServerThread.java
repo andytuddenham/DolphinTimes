@@ -1,6 +1,5 @@
 package com.tudders.dolphin.times.server;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -32,9 +31,9 @@ public class ServerThread extends Thread {
 		clientList.remove(conn);
 	}
 
-	public void newRace(Race newRace) {
+	public void push(Race newRace) {
 		for (ClientThread client : clientList) {
-			client.newRace(newRace);
+			client.push(newRace);
 		}
 	}
 

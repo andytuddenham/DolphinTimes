@@ -19,7 +19,7 @@ public class ClientThread extends Thread {
 		return runClient;
 	}
 
-	public void newRace(Race newRace) {
+	public void push(Race newRace) {
 		queue.add(newRace);
 	}
 
