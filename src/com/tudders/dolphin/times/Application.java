@@ -309,7 +309,11 @@ public class Application implements ResultsListener {
 
 		public void newRaceInMeet(String meet) {
 			Integer newMeet = Integer.valueOf(meet);
-			Integer selectedMeet = Integer.valueOf(meetPanel.getSelectedMeet());
+			Integer selectedMeet = 0;
+			String selected = meetPanel.getSelectedMeet();
+			if (selected != null) {
+				selectedMeet = Integer.valueOf(selected);
+			}
 			logger.finer("newMeet "+newMeet+", selectedMeet "+selectedMeet);
 			if (newMeet == selectedMeet) {
 				raceListPanel.setRaceList(meetMap.get(meet));
