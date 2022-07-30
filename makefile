@@ -2,7 +2,7 @@
 
 .PHONY: run
 run: DolphinTimes.jar
-	java -jar ./DolphinTimes.jar DolphinTimes.properties
+	java -jar ./DolphinTimes.jar
 
 .PHONY: jar
 jar: DolphinTimes.jar
