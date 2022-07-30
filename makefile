@@ -1,11 +1,22 @@
 
+.PHONY: jar
+jar: DolphinTimes.jar
 
 .PHONY: run
 run: DolphinTimes.jar
 	java -jar ./DolphinTimes.jar
 
-.PHONY: jar
-jar: DolphinTimes.jar
+.PHONY: release
+release: DolphinTimes.zip
+
+DolphinTimes.zip: DolphinTimes.zip(DolphinTimes.jar) DolphinTimes.zip(dolpintimes.properties) DolphinTimes.zip(res/images/icon.ico)
+
+DolphinTimes.zip(%):
+	zip -j $@ $%
+
+DolphinTimes.zip(dolpintimes.properties): res/config/dolphintimes.properties
+	@echo ==== Copying "res/config/dolphintimes.properties" make sure this is okay for release. ====
+	-zip -j $@ $^
 
 .PHONY: clean
 clean:
