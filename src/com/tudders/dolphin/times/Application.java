@@ -53,14 +53,14 @@ public class Application implements ResultsListener {
 	private ListFrame listFrame;
 	private String watchDir;
 	private ResultsWatcherThread resultsWatcherThread = null;
-	private final Map<String, Meet> meetMap = Collections.synchronizedMap(new HashMap<String, Meet>());
-	private final List<RaceFrame> raceFrameList = Collections.synchronizedList(new ArrayList<RaceFrame>());
+	private final Map<String, Meet> meets = Collections.synchronizedMap(new HashMap<String, Meet>());
+	private final List<RaceFrame> raceFrames = Collections.synchronizedList(new ArrayList<RaceFrame>());
 	private HelpFrame helpFrame = null;
 	private static final Map<String, Level> loggingMap = new HashMap<String, Level>();
 	private static final Logger logger;
 	private static FileHandler fileHandler;
 	private ServerThread bluetoothServerThread = null;
-	private IPServerThread ipServerThread = null;
+	private ServerThread ipServerThread = null;
 
 	static {
 		Calendar calendar = Calendar.getInstance();
@@ -92,10 +92,10 @@ public class Application implements ResultsListener {
 		String meetName = DolphinFile.getMeetFromFile(file);
 		if (meetName != null) {
 			Date modifiedDate = new Date(file.lastModified());
-			Meet meet = meetMap.get(meetName);
+			Meet meet = meets.get(meetName);
 			if (meet == null) {
 				meet = new Meet(meetName, modifiedDate);
-				meetMap.put(meetName, meet);
+				meets.put(meetName, meet);
 			}
 			Race race = new Race(file);
 			if (race.isValid()) {
@@ -155,7 +155,7 @@ public class Application implements ResultsListener {
 			try { resultsWatcherThread.join(); } catch (InterruptedException e) {}
 		}
 		logger.fine("Closing frames");
-		for (RaceFrame raceFrame: raceFrameList) {
+		for (RaceFrame raceFrame: raceFrames) {
 			raceFrame.dispose();
 		}
 		if (helpFrame != null) helpFrame.dispose();
@@ -170,9 +170,9 @@ public class Application implements ResultsListener {
 			File file = new File(fileName);
 			String meet = addResultsFile(file, true);
 			if (meet != null) {
-				logger.fine("Updating frames for meet "+meet+" race count="+meetMap.get(meet).getRaceCount());
+				logger.fine("Updating frames for meet "+meet+" race count="+meets.get(meet).getRaceCount());
 				listFrame.newRaceInMeet(meet);
-				for (RaceFrame raceFrame: raceFrameList) {
+				for (RaceFrame raceFrame: raceFrames) {
 					raceFrame.newRace(file);
 				}
 			}
@@ -187,7 +187,7 @@ public class Application implements ResultsListener {
 			String meetName = DolphinFile.getMeetFromFile(file);
 			if (meetName != null) {
 				String raceNumber = DolphinFile.getRaceFromFile(file);
-				Meet meet = meetMap.get(meetName);
+				Meet meet = meets.get(meetName);
 				if (meet != null) {
 					List<Race> raceList = meet.getRaceList();
 					if (raceList != null) {
@@ -201,7 +201,7 @@ public class Application implements ResultsListener {
 
 								} else {
 									listFrame.refreshMeet(meetName);
-									for (RaceFrame raceFrame: raceFrameList) {
+									for (RaceFrame raceFrame: raceFrames) {
 										raceFrame.removeRace(file);
 									}
 								}
@@ -223,7 +223,7 @@ public class Application implements ResultsListener {
 			if (meetName != null) {
 				String raceNumber = DolphinFile.getRaceFromFile(file);
 				logger.fine("meet: "+meetName+" race "+raceNumber);
-				Meet meet = meetMap.get(meetName);
+				Meet meet = meets.get(meetName);
 				if (meet != null) {
 					List<Race> raceList = meet.getRaceList();
 					if (raceList != null) {
@@ -243,7 +243,7 @@ public class Application implements ResultsListener {
 						}
 						logger.fine("Updating frames for meet "+meetName+" race "+raceNumber);
 						listFrame.refreshMeet(meetName);
-						for (RaceFrame raceFrame: raceFrameList) {
+						for (RaceFrame raceFrame: raceFrames) {
 							raceFrame.updateRace(file);
 						}
 					}
@@ -282,7 +282,7 @@ public class Application implements ResultsListener {
 			raceListPanel = new RaceListPanel(this);
 			meetPanel = new MeetPanel();
 			meetPanel.addMeetListener(this);
-			meetPanel.setMeetMap(meetMap);
+			meetPanel.setMeetMap(meets);
 			headerPanel.add(meetPanel);
 			headerPanel.add(Box.createRigidArea(new Dimension(3, 0)));
 			headerPanel.add(Box.createGlue());
@@ -366,12 +366,12 @@ public class Application implements ResultsListener {
 			raceFrame.setMeet(meetPanel.getSelectedMeet());
 			raceFrame.setRace(raceNumber);
 			raceFrame.setVisible(true);
-			raceFrameList.add(raceFrame);
+			raceFrames.add(raceFrame);
 		}
 
 		@Override
 		public void selectMeetEvent(String meet) {
-			raceListPanel.setRaceList(meetMap.get(meet).getRaceList());
+			raceListPanel.setRaceList(meets.get(meet).getRaceList());
 		}
 
 		@Override
@@ -388,29 +388,35 @@ public class Application implements ResultsListener {
 			}
 			logger.finer("newMeet "+newMeet+", selectedMeet "+selectedMeet);
 			if (newMeet == selectedMeet) {
-				raceListPanel.setRaceList(meetMap.get(meet).getRaceList());
+				raceListPanel.setRaceList(meets.get(meet).getRaceList());
 			} else if (newMeet > selectedMeet) {
-				meetPanel.setMeetMap(meetMap);
-				raceListPanel.setRaceList(meetMap.get(meet).getRaceList());
+				meetPanel.setMeetMap(meets);
+				raceListPanel.setRaceList(meets.get(meet).getRaceList());
 			}
 		}
 
 		public void refreshMeet(String meet) {
 			logger.finer("meet "+meet);
 			if (meet.equals(meetPanel.getSelectedMeet())) {
-				raceListPanel.setRaceList(meetMap.get(meet).getRaceList());
+				raceListPanel.setRaceList(meets.get(meet).getRaceList());
 			}
 		}
 
-		public void serverError(Throwable throwable) {
+		public void serverError(ServerThread thread, Throwable throwable) {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					bluetoothServerThread = null;
-					bluetoothButton.setBackground(Color.RED);
-					btIndicator.setOnState(false);
-					// FIXME JOptionPane.ERROR_MESSAGE icon is clipped in the following message dialog
-					JOptionPane.showMessageDialog(null, "Failed to start Bluetooth server function: "+throwable.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					if (thread instanceof BluetoothServerThread) {
+						bluetoothServerThread = null;
+						bluetoothButton.setBackground(Color.RED);
+						btIndicator.setOnState(false);
+						// FIXME JOptionPane.ERROR_MESSAGE icon is clipped in the following message dialog
+						JOptionPane.showMessageDialog(null, "Failed to start Bluetooth server function: "+throwable.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					} else if (thread instanceof IPServerThread) {
+						// TODO
+						ipServerThread = null;
+						JOptionPane.showMessageDialog(null, "Failed to start IP server function: "+throwable.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+ 					}
 				}
 			});
 		}
@@ -444,7 +450,7 @@ public class Application implements ResultsListener {
 			racePanel.addRaceListener(this);
 			meetPanel = new MeetPanel();
 			meetPanel.addMeetListener(this);
-			meetPanel.setMeetMap(meetMap);
+			meetPanel.setMeetMap(meets);
 			contentPanel.add(meetPanel);
 			contentPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 			contentPanel.add(racePanel);
@@ -459,7 +465,7 @@ public class Application implements ResultsListener {
 			setLocationRelativeTo(null);
 		}
 
-		@Override public void selectMeetEvent(String meet) { racePanel.setRaceList(meetMap.get(meet).getRaceList()); }
+		@Override public void selectMeetEvent(String meet) { racePanel.setRaceList(meets.get(meet).getRaceList()); }
 		@Override public void clearMeetEvent()             { racePanel.clearRaceList(); }
 		@Override public void selectRaceEvent(Race race)   { resultsPanel.setRace(race); }
 		@Override public void clearRaceEvent()             { resultsPanel.clearRace(); }
@@ -497,8 +503,8 @@ public class Application implements ResultsListener {
 	}
 
 	private void removeRaceFrame(RaceFrame raceFrame) {
-		if (raceFrameList.contains(raceFrame)) {
-			raceFrameList.remove(raceFrame);
+		if (raceFrames.contains(raceFrame)) {
+			raceFrames.remove(raceFrame);
 			raceFrame.dispose();
 		}
 	}

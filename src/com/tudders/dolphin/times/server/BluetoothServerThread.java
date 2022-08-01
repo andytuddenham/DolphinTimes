@@ -75,7 +75,7 @@ public class BluetoothServerThread extends ServerThread {
 			}
 		}
 		if (error != null) {
-			super.reportError(error);
+			super.reportError(this, error);
 		}
 		logger.info(Thread.currentThread().getName()+" ended");
 	}

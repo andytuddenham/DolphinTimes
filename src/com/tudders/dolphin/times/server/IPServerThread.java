@@ -3,6 +3,7 @@ package com.tudders.dolphin.times.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +39,10 @@ public class IPServerThread extends ServerThread {
 					clientThread.setName("IP Server Thread #"+serverNumber++);
 					addClient(clientThread);
 					clientThread.start();
+				} catch (SocketException se) {
+					if (runServer()) {
+						se.printStackTrace();
+					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -45,7 +50,7 @@ public class IPServerThread extends ServerThread {
 			}		
 		}
 		if (error != null) {
-			super.reportError(error);
+			super.reportError(this, error);
 		}
 		logger.info(Thread.currentThread().getName()+" ended");
 	}

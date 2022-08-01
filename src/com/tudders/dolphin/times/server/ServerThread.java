@@ -37,8 +37,8 @@ public class ServerThread extends Thread {
 		}
 	}
 
-	public void reportError(Throwable error) {
-		listFrame.serverError(error);
+	public void reportError(ServerThread thread, Throwable error) {
+		listFrame.serverError(thread, error);
 	}
 
 	public void shutdown() {
